@@ -136,6 +136,16 @@ router.delete("/:id", requireAuth, async (req, res) => {
   res.json({ ...task, sector: null, project: null, totalTimeSeconds: 0 });
 });
 
+router.delete("/:id/permanent", requireAuth, async (req, res) => {
+  const { id } = req.params;
+  const userId = req.userId!;
+  const [existing] = await db.select().from(tasksTable).where(and(eq(tasksTable.id, id), eq(tasksTable.userId, userId)));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  await db.delete(timeSessionsTable).where(eq(timeSessionsTable.taskId, id));
+  await db.delete(tasksTable).where(and(eq(tasksTable.id, id), eq(tasksTable.userId, userId)));
+  res.json({ success: true });
+});
+
 router.patch("/:id/execute", requireAuth, async (req, res) => {
   const { id } = req.params;
   const userId = req.userId!;

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ClerkProvider, SignIn, SignUp, Show, useClerk, useAuth } from "@clerk/react";
 import { publishableKeyFromHost } from "@clerk/react/internal";
 import { shadcn } from "@clerk/themes";
@@ -21,6 +21,7 @@ import Projetos from "@/pages/Projetos";
 import Configuracoes from "@/pages/Configuracoes";
 import AppLayout from "@/components/layout/AppLayout";
 import FloatingTimer from "@/components/layout/FloatingTimer";
+import QuickAddModal from "@/components/tasks/QuickAddModal";
 import NotFound from "@/pages/not-found";
 
 const clerkPubKey = publishableKeyFromHost(
@@ -114,7 +115,7 @@ function SignUpPage() {
   );
 }
 
-function ProtectedRoute({ component: Component }: { component: any }) {
+function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   return (
     <>
       <Show when="signed-in">
@@ -140,24 +141,38 @@ function ClerkAuthSetup() {
 
 function ClerkQueryClientCacheInvalidator() {
   const { addListener } = useClerk();
-  const queryClient = useQueryClient();
+  const qc = useQueryClient();
   const prevUserIdRef = useRef<string | null | undefined>(undefined);
 
   useEffect(() => {
     const unsubscribe = addListener(({ user }) => {
       const userId = user?.id ?? null;
-      if (
-        prevUserIdRef.current !== undefined &&
-        prevUserIdRef.current !== userId
-      ) {
-        queryClient.clear();
+      if (prevUserIdRef.current !== undefined && prevUserIdRef.current !== userId) {
+        qc.clear();
       }
       prevUserIdRef.current = userId;
     });
     return unsubscribe;
-  }, [addListener, queryClient]);
+  }, [addListener, qc]);
 
   return null;
+}
+
+function GlobalQuickAddModal() {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        setOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  return <QuickAddModal open={open} onClose={() => setOpen(false)} />;
 }
 
 function ClerkProviderWithRoutes() {
@@ -193,6 +208,7 @@ function ClerkProviderWithRoutes() {
             <Route component={NotFound} />
           </Switch>
           <FloatingTimer />
+          <GlobalQuickAddModal />
           <Toaster />
         </TooltipProvider>
       </QueryClientProvider>

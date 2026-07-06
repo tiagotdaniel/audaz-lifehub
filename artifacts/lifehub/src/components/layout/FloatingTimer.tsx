@@ -1,8 +1,10 @@
 import { useEffect } from "react";
 import { useTimerStore } from "@/store/timerStore";
-import { useGetTask, usePauseTask, useStopTask } from "@workspace/api-client-react";
-import { Play, Pause, Square, Timer } from "lucide-react";
+import { useGetTask, usePauseTask, useStopTask, useExecuteTask } from "@workspace/api-client-react";
+import { Play, Pause, Square, Timer, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useQueryClient } from "@tanstack/react-query";
+import { getGetTasksQueryKey, getGetTaskQueryKey } from "@workspace/api-client-react";
 
 function formatTime(seconds: number) {
   const h = Math.floor(seconds / 3600);
@@ -12,7 +14,8 @@ function formatTime(seconds: number) {
 }
 
 export default function FloatingTimer() {
-  const { activeTaskId, elapsedSeconds, isPaused, tick, setPaused, reset } = useTimerStore();
+  const { activeTaskId, elapsedSeconds, isPaused, tick, setPaused, reset, resetLocal } = useTimerStore();
+  const qc = useQueryClient();
 
   const { data: task } = useGetTask(activeTaskId || "", {
     query: { enabled: !!activeTaskId }
@@ -20,14 +23,11 @@ export default function FloatingTimer() {
 
   const pauseTaskMutation = usePauseTask();
   const stopTaskMutation = useStopTask();
+  const executeTaskMutation = useExecuteTask();
 
   useEffect(() => {
     if (!activeTaskId) return;
-    
-    const interval = setInterval(() => {
-      tick();
-    }, 1000);
-    
+    const interval = setInterval(() => { tick(); }, 1000);
     return () => clearInterval(interval);
   }, [activeTaskId, tick]);
 
@@ -36,19 +36,34 @@ export default function FloatingTimer() {
   const handlePauseToggle = () => {
     if (!isPaused) {
       pauseTaskMutation.mutate({ id: activeTaskId }, {
-        onSuccess: () => setPaused(true)
+        onSuccess: () => {
+          setPaused(true);
+          qc.invalidateQueries({ queryKey: getGetTasksQueryKey() });
+          qc.invalidateQueries({ queryKey: getGetTaskQueryKey(activeTaskId) });
+        }
       });
     } else {
-      // Need execute mutation here to resume, but api gives executeTask, we can call it here if we want to resume
-      // For now just toggle local state
-      setPaused(false);
+      executeTaskMutation.mutate({ id: activeTaskId }, {
+        onSuccess: (res) => {
+          setPaused(false);
+          useTimerStore.getState().setActive(activeTaskId, res.session.id);
+          qc.invalidateQueries({ queryKey: getGetTasksQueryKey() });
+        }
+      });
     }
   };
 
   const handleStop = () => {
     stopTaskMutation.mutate({ id: activeTaskId }, {
-      onSuccess: () => reset()
+      onSuccess: () => {
+        reset();
+        qc.invalidateQueries({ queryKey: getGetTasksQueryKey() });
+      }
     });
+  };
+
+  const handleReset = () => {
+    resetLocal();
   };
 
   return (
@@ -57,31 +72,43 @@ export default function FloatingTimer() {
         <Timer className="h-5 w-5" />
       </div>
       
-      <div className="min-w-0 max-w-[200px]">
+      <div className="min-w-0 max-w-[180px]">
         <p className="text-xs text-[#A89880] font-medium mb-1 truncate">
           {task.project ? `${task.project.name} / ` : ''}{task.title}
         </p>
         <p className={`text-2xl font-mono font-bold leading-none tracking-tight ${isPaused ? 'text-[#ED8936]' : 'text-[#C9A84C]'}`}>
           {formatTime(elapsedSeconds)}
         </p>
+        {isPaused && <p className="text-xs text-[#ED8936] mt-0.5">Pausado</p>}
       </div>
 
-      <div className="flex items-center gap-2 pl-4 border-l border-[#1A2B42]">
+      <div className="flex items-center gap-1 pl-4 border-l border-[#1A2B42]">
         <Button
           size="icon"
           variant="ghost"
-          className="h-9 w-9 text-[#F0EBE3] hover:text-[#C9A84C] hover:bg-[#1A2B42]"
+          className="h-8 w-8 text-[#F0EBE3] hover:text-[#C9A84C] hover:bg-[#1A2B42]"
           onClick={handlePauseToggle}
-          disabled={pauseTaskMutation.isPending}
+          disabled={pauseTaskMutation.isPending || executeTaskMutation.isPending}
+          title={isPaused ? "Retomar" : "Pausar"}
         >
           {isPaused ? <Play className="h-4 w-4" fill="currentColor" /> : <Pause className="h-4 w-4" fill="currentColor" />}
         </Button>
         <Button
           size="icon"
           variant="ghost"
-          className="h-9 w-9 text-[#E53E3E] hover:text-[#E53E3E] hover:bg-[#1A2B42]"
+          className="h-8 w-8 text-[#A89880] hover:text-[#F0EBE3] hover:bg-[#1A2B42]"
+          onClick={handleReset}
+          title="Reiniciar contagem"
+        >
+          <RotateCcw className="h-3.5 w-3.5" />
+        </Button>
+        <Button
+          size="icon"
+          variant="ghost"
+          className="h-8 w-8 text-[#E53E3E] hover:text-[#E53E3E] hover:bg-[#1A2B42]"
           onClick={handleStop}
           disabled={stopTaskMutation.isPending}
+          title="Parar e salvar sessão"
         >
           <Square className="h-4 w-4" fill="currentColor" />
         </Button>

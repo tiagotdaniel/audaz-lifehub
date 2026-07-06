@@ -1,14 +1,24 @@
 {
   "name": "Audaz LifeHub",
-  "short_name": "LifeHub",
-  "theme_color": "#0D1B2A",
-  "background_color": "#0D1B2A",
+  "short_name": "Audaz",
+  "description": "Seu centro de comando pessoal para alta performance.",
+  "start_url": "/dashboard",
   "display": "standalone",
+  "background_color": "#0D1B2A",
+  "theme_color": "#0D1B2A",
   "icons": [
+    { "src": "/logo.svg", "sizes": "any", "type": "image/svg+xml" }
+  ],
+  "shortcuts": [
     {
-      "src": "/logo.svg",
-      "sizes": "192x192",
-      "type": "image/svg+xml"
+      "name": "Nova Tarefa",
+      "url": "/tasks?new=1",
+      "description": "Criar uma nova tarefa"
+    },
+    {
+      "name": "Hoje",
+      "url": "/hoje",
+      "description": "Ver tarefas de hoje"
     }
   ]
 }

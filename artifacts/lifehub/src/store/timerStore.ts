@@ -10,6 +10,7 @@ interface TimerState {
   setPaused: (val: boolean) => void;
   tick: () => void;
   reset: () => void;
+  resetLocal: () => void;
 }
 
 export const useTimerStore = create<TimerState>((set) => ({
@@ -39,4 +40,12 @@ export const useTimerStore = create<TimerState>((set) => ({
       elapsedSeconds: 0,
       isPaused: false,
     }),
+  resetLocal: () =>
+    set((state) => ({
+      elapsedSeconds: 0,
+      startedAt: new Date(),
+      isPaused: false,
+      activeTaskId: state.activeTaskId,
+      sessionId: state.sessionId,
+    })),
 }));
