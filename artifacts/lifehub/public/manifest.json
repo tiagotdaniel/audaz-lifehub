@@ -1,0 +1,14 @@
+{
+  "name": "Audaz LifeHub",
+  "short_name": "LifeHub",
+  "theme_color": "#0D1B2A",
+  "background_color": "#0D1B2A",
+  "display": "standalone",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}

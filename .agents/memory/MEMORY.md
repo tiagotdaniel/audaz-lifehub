@@ -1,0 +1,1 @@
+- [Audaz LifeHub architecture](lifehub-arch.md) — full-stack PT productivity app; Drizzle not Prisma; Clerk token via setAuthTokenGetter; JIT user provisioning in requireAuth

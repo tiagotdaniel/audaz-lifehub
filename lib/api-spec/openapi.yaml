@@ -3,20 +3,35 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Audaz LifeHub API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: users
+    description: User operations
+  - name: tasks
+    description: Task operations
+  - name: sectors
+    description: Sector operations
+  - name: projects
+    description: Project operations
+  - name: goals
+    description: Goal operations
+  - name: milestones
+    description: Milestone operations
+  - name: timeSessions
+    description: Time session operations
+  - name: stats
+    description: Statistics operations
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +39,559 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /me:
+    get:
+      operationId: getMe
+      tags: [users]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+    patch:
+      operationId: updateMe
+      tags: [users]
+      summary: Update current user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /tasks:
+    get:
+      operationId: getTasks
+      tags: [tasks]
+      summary: List tasks with optional filters
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: sectorId
+          in: query
+          schema:
+            type: string
+        - name: priority
+          in: query
+          schema:
+            type: integer
+        - name: projectId
+          in: query
+          schema:
+            type: string
+        - name: goalId
+          in: query
+          schema:
+            type: string
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+    post:
+      operationId: createTask
+      tags: [tasks]
+      summary: Create a task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskInput"
+      responses:
+        "201":
+          description: Created task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+
+  /tasks/{id}:
+    get:
+      operationId: getTask
+      tags: [tasks]
+      summary: Get task detail with time sessions
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Task detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskDetail"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateTask
+      tags: [tasks]
+      summary: Update a task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskUpdate"
+      responses:
+        "200":
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+    delete:
+      operationId: deleteTask
+      tags: [tasks]
+      summary: Soft-delete a task (status=cancelled)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+
+  /tasks/{id}/execute:
+    patch:
+      operationId: executeTask
+      tags: [tasks]
+      summary: Start timer for a task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Task session started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskSessionResult"
+
+  /tasks/{id}/pause:
+    patch:
+      operationId: pauseTask
+      tags: [tasks]
+      summary: Pause timer for a task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Task paused
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+
+  /tasks/{id}/stop:
+    patch:
+      operationId: stopTask
+      tags: [tasks]
+      summary: Stop timer, save session duration
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Task stopped
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+
+  /tasks/{id}/done:
+    patch:
+      operationId: completeTask
+      tags: [tasks]
+      summary: Mark task as done
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Task completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+
+  /sectors:
+    get:
+      operationId: getSectors
+      tags: [sectors]
+      summary: List user sectors
+      responses:
+        "200":
+          description: List of sectors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Sector"
+    post:
+      operationId: createSector
+      tags: [sectors]
+      summary: Create a sector
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SectorInput"
+      responses:
+        "201":
+          description: Created sector
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sector"
+
+  /sectors/{id}:
+    patch:
+      operationId: updateSector
+      tags: [sectors]
+      summary: Update a sector
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SectorUpdate"
+      responses:
+        "200":
+          description: Updated sector
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sector"
+    delete:
+      operationId: deleteSector
+      tags: [sectors]
+      summary: Delete a sector
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sector"
+
+  /projects:
+    get:
+      operationId: getProjects
+      tags: [projects]
+      summary: List projects
+      responses:
+        "200":
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Project"
+    post:
+      operationId: createProject
+      tags: [projects]
+      summary: Create a project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectInput"
+      responses:
+        "201":
+          description: Created project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+
+  /projects/{id}:
+    patch:
+      operationId: updateProject
+      tags: [projects]
+      summary: Update a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectUpdate"
+      responses:
+        "200":
+          description: Updated project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+    delete:
+      operationId: deleteProject
+      tags: [projects]
+      summary: Delete a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+
+  /goals:
+    get:
+      operationId: getGoals
+      tags: [goals]
+      summary: List goals
+      responses:
+        "200":
+          description: List of goals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Goal"
+    post:
+      operationId: createGoal
+      tags: [goals]
+      summary: Create a goal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoalInput"
+      responses:
+        "201":
+          description: Created goal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Goal"
+
+  /goals/{id}:
+    patch:
+      operationId: updateGoal
+      tags: [goals]
+      summary: Update a goal (including currentValue increment)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoalUpdate"
+      responses:
+        "200":
+          description: Updated goal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Goal"
+    delete:
+      operationId: deleteGoal
+      tags: [goals]
+      summary: Delete a goal
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Goal"
+
+  /milestones:
+    get:
+      operationId: getMilestones
+      tags: [milestones]
+      summary: List milestones
+      responses:
+        "200":
+          description: List of milestones
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Milestone"
+    post:
+      operationId: createMilestone
+      tags: [milestones]
+      summary: Create a milestone
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MilestoneInput"
+      responses:
+        "201":
+          description: Created milestone
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Milestone"
+
+  /milestones/{id}:
+    patch:
+      operationId: updateMilestone
+      tags: [milestones]
+      summary: Update a milestone
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MilestoneUpdate"
+      responses:
+        "200":
+          description: Updated milestone
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Milestone"
+    delete:
+      operationId: deleteMilestone
+      tags: [milestones]
+      summary: Delete a milestone
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Milestone"
+
+  /stats/weekly:
+    get:
+      operationId: getWeeklyStats
+      tags: [stats]
+      summary: Weekly statistics
+      responses:
+        "200":
+          description: Weekly stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeeklyStats"
+
+  /stats/annual:
+    get:
+      operationId: getAnnualStats
+      tags: [stats]
+      summary: Annual heatmap data
+      responses:
+        "200":
+          description: Annual stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnnualStats"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +602,434 @@ components:
       required:
         - status
 
+    User:
+      type: object
+      required: [id, clerkId, name, email]
+      properties:
+        id:
+          type: string
+        clerkId:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        avatarUrl:
+          type: ["string", "null"]
+        whatsappNumber:
+          type: ["string", "null"]
+        timezone:
+          type: string
+        notifPrefs:
+          type: object
+          properties:
+            push:
+              type: boolean
+            whatsapp:
+              type: boolean
+        createdAt:
+          type: string
+
+    UserUpdate:
+      type: object
+      properties:
+        whatsappNumber:
+          type: ["string", "null"]
+        timezone:
+          type: string
+        notifPrefs:
+          type: object
+          properties:
+            push:
+              type: boolean
+            whatsapp:
+              type: boolean
+
+    Sector:
+      type: object
+      required: [id, label, color, isDefault]
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        color:
+          type: string
+        isDefault:
+          type: boolean
+
+    SectorInput:
+      type: object
+      required: [label]
+      properties:
+        label:
+          type: string
+        color:
+          type: string
+
+    SectorUpdate:
+      type: object
+      properties:
+        label:
+          type: string
+        color:
+          type: string
+
+    Task:
+      type: object
+      required: [id, title, priority, status, createdAt]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        priority:
+          type: integer
+        status:
+          type: string
+        dueDate:
+          type: ["string", "null"]
+        reminderAt:
+          type: ["string", "null"]
+        reminderSent:
+          type: boolean
+        reminderChannels:
+          type: array
+          items:
+            type: string
+        sectorId:
+          type: ["string", "null"]
+        projectId:
+          type: ["string", "null"]
+        goalId:
+          type: ["string", "null"]
+        sector:
+          oneOf:
+            - $ref: "#/components/schemas/Sector"
+            - type: "null"
+        project:
+          oneOf:
+            - $ref: "#/components/schemas/Project"
+            - type: "null"
+        totalTimeSeconds:
+          type: integer
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    TaskDetail:
+      type: object
+      required: [id, title, priority, status, createdAt, timeSessions]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        priority:
+          type: integer
+        status:
+          type: string
+        dueDate:
+          type: ["string", "null"]
+        reminderAt:
+          type: ["string", "null"]
+        reminderSent:
+          type: boolean
+        reminderChannels:
+          type: array
+          items:
+            type: string
+        sectorId:
+          type: ["string", "null"]
+        projectId:
+          type: ["string", "null"]
+        goalId:
+          type: ["string", "null"]
+        sector:
+          oneOf:
+            - $ref: "#/components/schemas/Sector"
+            - type: "null"
+        project:
+          oneOf:
+            - $ref: "#/components/schemas/Project"
+            - type: "null"
+        goal:
+          oneOf:
+            - $ref: "#/components/schemas/Goal"
+            - type: "null"
+        timeSessions:
+          type: array
+          items:
+            $ref: "#/components/schemas/TimeSession"
+        totalTimeSeconds:
+          type: integer
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    TaskInput:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        priority:
+          type: integer
+          default: 4
+        dueDate:
+          type: ["string", "null"]
+        reminderAt:
+          type: ["string", "null"]
+        reminderChannels:
+          type: array
+          items:
+            type: string
+        sectorId:
+          type: ["string", "null"]
+        projectId:
+          type: ["string", "null"]
+        goalId:
+          type: ["string", "null"]
+
+    TaskUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        priority:
+          type: integer
+        status:
+          type: string
+        dueDate:
+          type: ["string", "null"]
+        reminderAt:
+          type: ["string", "null"]
+        reminderChannels:
+          type: array
+          items:
+            type: string
+        sectorId:
+          type: ["string", "null"]
+        projectId:
+          type: ["string", "null"]
+        goalId:
+          type: ["string", "null"]
+
+    TaskSessionResult:
+      type: object
+      required: [task, session]
+      properties:
+        task:
+          $ref: "#/components/schemas/Task"
+        session:
+          $ref: "#/components/schemas/TimeSession"
+
+    TimeSession:
+      type: object
+      required: [id, taskId, startedAt, createdAt]
+      properties:
+        id:
+          type: string
+        taskId:
+          type: string
+        startedAt:
+          type: string
+        endedAt:
+          type: ["string", "null"]
+        durationSeconds:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+
+    Project:
+      type: object
+      required: [id, name, color, status, createdAt]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        color:
+          type: string
+        deadline:
+          type: ["string", "null"]
+        status:
+          type: string
+        taskCount:
+          type: integer
+        doneCount:
+          type: integer
+        createdAt:
+          type: string
+
+    ProjectInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        color:
+          type: string
+        deadline:
+          type: ["string", "null"]
+
+    ProjectUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        color:
+          type: string
+        deadline:
+          type: ["string", "null"]
+        status:
+          type: string
+
+    Goal:
+      type: object
+      required: [id, title, type, targetValue, currentValue, status, createdAt]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        type:
+          type: string
+        targetValue:
+          type: number
+        currentValue:
+          type: number
+        deadline:
+          type: ["string", "null"]
+        status:
+          type: string
+        progressPercent:
+          type: number
+        isAtRisk:
+          type: boolean
+        createdAt:
+          type: string
+
+    GoalInput:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        type:
+          type: string
+        targetValue:
+          type: number
+        currentValue:
+          type: number
+        deadline:
+          type: ["string", "null"]
+
+    GoalUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        type:
+          type: string
+        targetValue:
+          type: number
+        currentValue:
+          type: number
+        deadline:
+          type: ["string", "null"]
+        status:
+          type: string
+
+    Milestone:
+      type: object
+      required: [id, title, done, createdAt]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        dueDate:
+          type: ["string", "null"]
+        done:
+          type: boolean
+        projectId:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    MilestoneInput:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        dueDate:
+          type: ["string", "null"]
+        projectId:
+          type: ["string", "null"]
+
+    MilestoneUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        dueDate:
+          type: ["string", "null"]
+        done:
+          type: boolean
+        projectId:
+          type: ["string", "null"]
+
+    DailyCount:
+      type: object
+      required: [date, count]
+      properties:
+        date:
+          type: string
+        count:
+          type: integer
+
+    WeeklyStats:
+      type: object
+      required: [total, done, pending, executing, totalHours, byDay]
+      properties:
+        total:
+          type: integer
+        done:
+          type: integer
+        pending:
+          type: integer
+        executing:
+          type: integer
+        totalHours:
+          type: number
+        byDay:
+          type: array
+          items:
+            $ref: "#/components/schemas/DailyCount"
+
+    AnnualStats:
+      type: object
+      required: [heatmap]
+      properties:
+        heatmap:
+          type: array
+          items:
+            $ref: "#/components/schemas/DailyCount"

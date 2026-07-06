@@ -1,0 +1,454 @@
+# AUDAZ LIFEHUB — PROMPT PARA REPLIT AGENT
+## Cole isso diretamente no chat do Replit Agent
+
+---
+
+You are building **Audaz LifeHub**, a full-stack productivity web app. Build the complete application in a single Replit project using the stack below. Do not ask for confirmation between steps — build everything end to end.
+
+---
+
+## STACK
+
+- **Frontend:** React 18 + Vite + TypeScript + Tailwind CSS
+- **Backend:** Node.js + Express + TypeScript
+- **Database:** PostgreSQL via Replit Database (use `pg` package) with Prisma ORM
+- **Auth:** Google OAuth 2.0 via `passport-google-oauth20` + JWT sessions
+- **AI / Date parsing:** `chrono-node` v2 with Portuguese locale
+- **Push notifications:** Web Push API (`web-push` package)
+- **WhatsApp:** Z-API REST calls (placeholder service, user configures token in settings)
+- **Realtime timer sync:** `socket.io`
+- **Styling:** Tailwind CSS with custom design tokens (colors below)
+
+---
+
+## DESIGN TOKENS — USE EXACTLY THESE COLORS
+
+```css
+--navy: #0D1B2A        /* background principal */
+--navy-mid: #162236    /* sidebar, header */
+--navy-card: #1A2B42   /* cards */
+--gold: #C9A84C        /* cor primária de ação, logo, destaques */
+--gold-light: #E2C06E  /* hover states */
+--brown: #4A2C1A       /* cor pessoal da marca */
+--brown-mid: #6B3F26   /* detalhes pessoais */
+--blue-accent: #2B6CB0 /* detalhes mínimos em azul */
+--text-primary: #F0EBE3
+--text-secondary: #A89880
+--text-muted: #6B7A8D
+--p1: #E53E3E   /* prioridade 1 — vermelho */
+--p2: #ED8936   /* prioridade 2 — laranja */
+--p3: #3B82F6   /* prioridade 3 — azul */
+--p4: #6B7280   /* prioridade 4 — cinza */
+--green: #38A169
+```
+
+Font stack: `Inter` (body) + `Playfair Display` (headings/logo) — import from Google Fonts.
+
+App name displayed as: **Audaz LifeHub** in Playfair Display, color `#C9A84C`.
+
+---
+
+## FULL FEATURE LIST — BUILD ALL OF THESE
+
+### M01 — Authentication
+- Google OAuth 2.0 login (passport-google-oauth20)
+- JWT session token, 7-day expiry, stored in httpOnly cookie
+- On first login: create User record in DB, seed default sectors
+- Profile page: show name, email, avatar from Google; WhatsApp number field (saved encrypted); notification preferences toggles
+
+### M02 — Task Creation (Quick Add)
+- Persistent input bar at top of main view (always visible)
+- **Natural language date parsing in Portuguese** using `chrono-node` pt locale:
+  - "amanhã às 19h" → next day 19:00
+  - "sexta" → next Friday
+  - "em 3 dias" → today + 3 days
+  - "próxima semana" → +7 days
+  - "hoje às 14h" → today 14:00
+  - Show parsed date preview instantly below input as user types
+  - If not recognized → show datetime picker
+- Priority selector: 4 colored flag buttons inline (P1=red, P2=orange, P3=blue, P4=gray). Default: P4
+- Sector selector: chips for Pessoal / Empresarial / Novos Projetos (+ custom sectors)
+- Submit on Enter key or click button
+- Keyboard shortcut: Ctrl+N / Cmd+N focuses the input from anywhere
+
+### M03 — Task Management
+- Task list with filters: sector, priority, due date, status, project
+- Three views: List / Kanban (by status columns) / Calendar (weekly grid)
+- Task statuses: pending, executing, paused, done, cancelled
+- **"Executar" button** on each task:
+  - Clicking starts a timer for that task
+  - Task status → "executing"
+  - Only one task can be executing at a time
+  - **Floating timer widget** appears bottom-right corner: shows task name (truncated) + elapsed HH:MM:SS + pause button + stop button
+  - Widget is always visible while timer runs, even when navigating between views
+  - Pause: timer pauses, status → "paused", widget shows "▶" to resume
+  - Stop: saves TimeSession record with duration, status → "pending", widget disappears
+  - Multiple sessions per task accumulate — show total in task detail
+- Task detail modal (click task to open):
+  - Edit title, due date/time, priority, sector, project, goal
+  - Reminder config: dropdown (no reminder / 5min / 15min / 30min / 1h / 1 day / custom)
+  - Notification channels: Push toggle + WhatsApp toggle
+  - Time sessions history: list of sessions with duration each + total accumulated
+- Completed tasks tab: filter by period (today/week/month/custom), show time spent, option to reopen
+
+### M04 — Notifications & Reminders
+- Background job (setInterval every 60s) checks tasks where `reminder_at <= now` AND `reminder_sent = false`
+- Push notification via Web Push API to browser
+- WhatsApp: POST to Z-API REST with message: "⏰ *{task title}* — {formatted time}"
+  - Z-API base URL: `https://api.z-api.io/instances/{ZAPI_INSTANCE}/token/{ZAPI_TOKEN}/send-text`
+- After sending: mark `reminder_sent = true`
+
+### M05 — Weekly Planning
+- 7-column grid (Sun–Sat), current week
+- Each column shows tasks due that day (colored pills by sector)
+- Drag and drop tasks between days (use `@dnd-kit/core`)
+- Week metrics bar: total tasks / completed / pending / total hours logged
+- Weekly review screen (Friday trigger): lists incomplete tasks, suggests reschedule
+
+### M06 — Annual View
+- GitHub-style heatmap (365 cells) showing completed tasks count per day
+- Color intensity: 0=navy-light, 1–2=gold@20%, 3–5=gold@50%, 6+=gold@100%
+- Annual milestones section: add milestone with title + date, display as timeline markers
+
+### M07 — Goals
+- Create goals: title, type (numeric/binary/habit), target value, deadline
+- Link tasks to goals: task detail has "Vincular à meta" dropdown
+- Goal dashboard: progress bar per goal, risk alert (deadline within 7 days + progress < 30%), history of completed goals
+- +1 button on numeric goals for quick increment
+
+### M08 — Projects
+- Create project: name, description, sector, color picker, deadline
+- Tasks can belong to a project (select in task creation/detail)
+- Project view: list or kanban of project tasks
+- Progress bar: % of done tasks / total tasks
+- Simplified Gantt: horizontal timeline of tasks by due date (use a simple SVG render)
+
+---
+
+## DATABASE SCHEMA (PostgreSQL + Prisma)
+
+```prisma
+model User {
+  id           String   @id @default(uuid())
+  googleId     String   @unique
+  name         String
+  email        String   @unique
+  avatarUrl    String?
+  whatsappEnc  String?
+  timezone     String   @default("America/Bahia")
+  notifPrefs   Json     @default("{\"push\":true,\"whatsapp\":false}")
+  sectors      Sector[]
+  tasks        Task[]
+  projects     Project[]
+  goals        Goal[]
+  sessions     TimeSession[]
+  milestones   Milestone[]
+  createdAt    DateTime @default(now())
+}
+
+model Sector {
+  id        String  @id @default(uuid())
+  userId    String
+  user      User    @relation(fields:[userId], references:[id], onDelete: Cascade)
+  label     String
+  color     String  @default("#6B7280")
+  isDefault Boolean @default(false)
+  tasks     Task[]
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields:[userId], references:[id], onDelete: Cascade)
+  name        String
+  description String?
+  color       String   @default("#C9A84C")
+  deadline    DateTime?
+  status      String   @default("active")
+  tasks       Task[]
+  milestones  Milestone[]
+  createdAt   DateTime @default(now())
+}
+
+model Goal {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields:[userId], references:[id], onDelete: Cascade)
+  title        String
+  type         String   @default("numeric")
+  targetValue  Float    @default(100)
+  currentValue Float    @default(0)
+  deadline     DateTime?
+  status       String   @default("active")
+  tasks        Task[]
+  createdAt    DateTime @default(now())
+}
+
+model Task {
+  id               String        @id @default(uuid())
+  userId           String
+  user             User          @relation(fields:[userId], references:[id], onDelete: Cascade)
+  sectorId         String?
+  sector           Sector?       @relation(fields:[sectorId], references:[id])
+  projectId        String?
+  project          Project?      @relation(fields:[projectId], references:[id])
+  goalId           String?
+  goal             Goal?         @relation(fields:[goalId], references:[id])
+  title            String
+  description      String?
+  priority         Int           @default(4)
+  status           String        @default("pending")
+  dueDate          DateTime?
+  reminderAt       DateTime?
+  reminderSent     Boolean       @default(false)
+  reminderChannels String[]      @default(["push"])
+  timeSessions     TimeSession[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+model TimeSession {
+  id              String    @id @default(uuid())
+  taskId          String
+  task            Task      @relation(fields:[taskId], references:[id], onDelete: Cascade)
+  userId          String
+  user            User      @relation(fields:[userId], references:[id], onDelete: Cascade)
+  startedAt       DateTime
+  endedAt         DateTime?
+  durationSeconds Int?
+  createdAt       DateTime  @default(now())
+}
+
+model Milestone {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields:[userId], references:[id], onDelete: Cascade)
+  projectId String?
+  project   Project?  @relation(fields:[projectId], references:[id])
+  title     String
+  dueDate   DateTime?
+  done      Boolean   @default(false)
+  createdAt DateTime  @default(now())
+}
+```
+
+---
+
+## API ROUTES (Express)
+
+```
+POST   /api/auth/google          → OAuth redirect
+GET    /api/auth/google/callback → callback, set JWT cookie
+POST   /api/auth/logout          → clear cookie
+GET    /api/me                   → current user profile
+
+GET    /api/tasks                → list (filters: status, sector, priority, project, dateFrom, dateTo)
+POST   /api/tasks                → create
+GET    /api/tasks/:id            → detail with timeSessions
+PATCH  /api/tasks/:id            → update
+DELETE /api/tasks/:id            → soft delete (status=cancelled)
+PATCH  /api/tasks/:id/execute    → start timer → create TimeSession
+PATCH  /api/tasks/:id/pause      → pause timer
+PATCH  /api/tasks/:id/stop       → stop timer, save duration
+PATCH  /api/tasks/:id/done       → mark done
+
+GET    /api/sectors              → list user sectors
+POST   /api/sectors              → create
+PATCH  /api/sectors/:id          → update
+DELETE /api/sectors/:id          → delete
+
+GET    /api/projects             → list
+POST   /api/projects             → create
+PATCH  /api/projects/:id         → update
+DELETE /api/projects/:id         → delete
+
+GET    /api/goals                → list
+POST   /api/goals                → create
+PATCH  /api/goals/:id            → update (including currentValue)
+DELETE /api/goals/:id            → delete
+
+GET    /api/milestones           → list
+POST   /api/milestones           → create
+PATCH  /api/milestones/:id       → update
+DELETE /api/milestones/:id       → delete
+
+GET    /api/stats/weekly         → { total, done, pending, totalHours, byDay[] }
+GET    /api/stats/annual         → { heatmap: [{date, count}] }
+```
+
+---
+
+## ENVIRONMENT VARIABLES (create .env)
+
+```env
+DATABASE_URL="postgresql://..."
+GOOGLE_CLIENT_ID="..."
+GOOGLE_CLIENT_SECRET="..."
+GOOGLE_CALLBACK_URL="https://{replit-url}/api/auth/google/callback"
+JWT_SECRET="gere-com-crypto.randomBytes(32).toString('hex')"
+SESSION_SECRET="outro-random-32-chars"
+ANTHROPIC_API_KEY="sk-ant-..."
+ZAPI_INSTANCE_ID=""
+ZAPI_TOKEN=""
+WEB_PUSH_PUBLIC_KEY=""
+WEB_PUSH_PRIVATE_KEY=""
+WHATSAPP_ENCRYPTION_KEY="32-char-random"
+NODE_ENV="development"
+PORT=3000
+```
+
+---
+
+## FILE STRUCTURE TO CREATE
+
+```
+/
+├── client/
+│   ├── src/
+│   │   ├── main.tsx
+│   │   ├── App.tsx
+│   │   ├── components/
+│   │   │   ├── layout/
+│   │   │   │   ├── Header.tsx        ← logo Audaz LifeHub + avatar
+│   │   │   │   ├── Sidebar.tsx       ← navegação completa
+│   │   │   │   └── FloatingTimer.tsx ← widget cronômetro flutuante
+│   │   │   ├── tasks/
+│   │   │   │   ├── QuickAdd.tsx      ← input com date preview
+│   │   │   │   ├── TaskList.tsx
+│   │   │   │   ├── TaskItem.tsx      ← com botão Executar
+│   │   │   │   ├── TaskDetail.tsx    ← modal completo
+│   │   │   │   ├── TaskKanban.tsx
+│   │   │   │   └── TaskCalendar.tsx
+│   │   │   ├── planning/
+│   │   │   │   ├── WeeklyView.tsx
+│   │   │   │   └── AnnualView.tsx    ← heatmap + milestones
+│   │   │   ├── goals/
+│   │   │   │   └── GoalCard.tsx
+│   │   │   └── projects/
+│   │   │       └── ProjectCard.tsx
+│   │   ├── pages/
+│   │   │   ├── LoginPage.tsx
+│   │   │   ├── Dashboard.tsx
+│   │   │   ├── TodayPage.tsx
+│   │   │   ├── WeeklyPage.tsx
+│   │   │   ├── AnnualPage.tsx
+│   │   │   ├── DonePage.tsx
+│   │   │   ├── GoalsPage.tsx
+│   │   │   ├── ProjectsPage.tsx
+│   │   │   └── SettingsPage.tsx
+│   │   ├── hooks/
+│   │   │   ├── useTasks.ts
+│   │   │   ├── useTimer.ts           ← estado global do cronômetro
+│   │   │   └── useAuth.ts
+│   │   ├── lib/
+│   │   │   ├── api.ts                ← fetch wrapper
+│   │   │   ├── dateParser.ts         ← chrono-node PT wrapper
+│   │   │   └── queryClient.ts        ← React Query setup
+│   │   └── store/
+│   │       └── timerStore.ts         ← Zustand store para timer global
+│   ├── index.html
+│   ├── vite.config.ts
+│   └── tailwind.config.ts
+├── server/
+│   ├── src/
+│   │   ├── index.ts                  ← Express app entry
+│   │   ├── routes/
+│   │   │   ├── auth.ts
+│   │   │   ├── tasks.ts
+│   │   │   ├── sectors.ts
+│   │   │   ├── projects.ts
+│   │   │   ├── goals.ts
+│   │   │   ├── milestones.ts
+│   │   │   └── stats.ts
+│   │   ├── middleware/
+│   │   │   ├── auth.ts               ← JWT verify middleware
+│   │   │   └── errorHandler.ts
+│   │   ├── workers/
+│   │   │   └── reminders.ts          ← setInterval 60s
+│   │   └── lib/
+│   │       ├── prisma.ts
+│   │       ├── fcm.ts                ← web-push sender
+│   │       └── zapi.ts               ← Z-API WhatsApp sender
+│   └── tsconfig.json
+├── prisma/
+│   ├── schema.prisma
+│   └── seed.ts                       ← seed setores padrão
+├── package.json
+└── .env
+```
+
+---
+
+## IMPORTANT IMPLEMENTATION DETAILS
+
+1. **Timer state is global** — use Zustand store. When user navigates between pages, the floating timer stays visible and keeps counting. Store: `{ activeTaskId, sessionId, startedAt, elapsedSeconds, isPaused }`.
+
+2. **Date parser wrapper** (`client/src/lib/dateParser.ts`):
+```typescript
+import * as chrono from 'chrono-node';
+export function parsePortugueseDate(text: string): Date | null {
+  return chrono.pt.parseDate(text, new Date(), { forwardDate: true });
+}
+export function extractTitle(text: string, parsedDate: Date | null): string {
+  if (!parsedDate) return text;
+  return text
+    .replace(/amanh[aã](\s+às?\s+[\d:h]+)?/gi, '')
+    .replace(/hoje(\s+às?\s+[\d:h]+)?/gi, '')
+    .replace(/[\d:]+\s*h(oras?)?/gi, '')
+    .replace(/em\s+\d+\s+dias?/gi, '')
+    .replace(/(próxima?\s+semana|segunda|terça|quarta|quinta|sexta|sábado|domingo)/gi, '')
+    .replace(/\s{2,}/g, ' ').trim() || text;
+}
+```
+
+3. **Sector default seeding** — on first user login, create:
+   - { label: "Pessoal", color: "#4CAF50", isDefault: true }
+   - { label: "Empresarial", color: "#2196F3", isDefault: true }
+   - { label: "Novos Projetos", color: "#9C27B0", isDefault: true }
+
+4. **Only one executing task at a time** — when user clicks Executar on a new task while another is running, auto-stop the current one first (save TimeSession), then start new one.
+
+5. **Reminder worker** runs every 60 seconds server-side. Check: `reminderAt <= NOW() AND reminderSent = false AND status NOT IN ('done','cancelled')`.
+
+6. **PWA basics** — add `manifest.json` with app name "Audaz LifeHub", theme_color `#0D1B2A`, background_color `#0D1B2A`, icons.
+
+7. **Drag and drop** for weekly view — use `@dnd-kit/core` to drag tasks between day columns, PATCH `/api/tasks/:id` with new `dueDate`.
+
+8. **React Query** for all data fetching — `@tanstack/react-query`. Cache invalidation on mutations.
+
+9. **Login page** — full screen, navy background, Audaz LifeHub logo centered in gold, single "Entrar com Google" button with Google icon.
+
+10. **All text in Brazilian Portuguese** — labels, buttons, empty states, error messages. Examples:
+    - Empty tasks: "Nenhuma tarefa. Adicione a primeira!"
+    - Execute button: "▶ Executar" / "⏸ Pausando" / "⏹ Executando"
+    - Priority labels: "P1 — Urgente" / "P2 — Alta" / "P3 — Média" / "P4 — Sem prioridade"
+
+---
+
+## WHAT TO BUILD FIRST (order matters)
+
+1. Project setup (Vite + Express + Prisma + Tailwind)
+2. DB schema + migrations + seed
+3. Google OAuth + JWT auth
+4. Task CRUD API + Quick Add UI with date parser
+5. Timer system (Zustand store + FloatingTimer component + API routes)
+6. Sidebar navigation + all page shells
+7. Weekly view + Annual heatmap
+8. Goals + Projects
+9. Reminder worker
+10. Polish: drag-drop, PWA manifest, empty states, loading skeletons
+
+---
+
+## DO NOT
+
+- Do not use Next.js (use Vite + Express)
+- Do not use localStorage for timer state (use Zustand in-memory, sync to server)
+- Do not hardcode any credentials
+- Do not skip TypeScript types
+- Do not use any other color than the design tokens above
+- Do not use English in the UI
+
+---
+
+Start building now. Begin with the project scaffold and work through the feature list in order.
