@@ -7,6 +7,14 @@ import projectsRouter from "./projects";
 import goalsRouter from "./goals";
 import milestonesRouter from "./milestones";
 import statsRouter from "./stats";
+import listsRouter from "./lists";
+import financesRouter from "./finances";
+import workoutRouter from "./workout";
+import dreamBoardRouter from "./dream-board";
+import documentsRouter from "./documents";
+import commentsRouter from "./comments";
+import feedbackRouter from "./feedback";
+import streakRouter from "./streak";
 
 const router = Router();
 
@@ -18,5 +26,13 @@ router.use("/projects", projectsRouter);
 router.use("/goals", goalsRouter);
 router.use("/milestones", milestonesRouter);
 router.use("/stats", statsRouter);
+router.use("/lists", listsRouter);
+router.use("/finances", financesRouter);
+router.use("/workout", workoutRouter);
+router.use("/dream-board", dreamBoardRouter);
+router.use("/documents", documentsRouter);
+router.use("/comments", commentsRouter);
+router.use("/feedback", feedbackRouter);
+router.use("/streak", streakRouter);
 
 export default router;

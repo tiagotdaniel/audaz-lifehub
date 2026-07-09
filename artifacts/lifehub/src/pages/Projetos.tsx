@@ -203,7 +203,7 @@ export default function Projetos() {
               <label className="text-xs text-[#6B7A8D] mb-1.5 block">Cor</label>
               <div className="flex gap-2 flex-wrap">
                 {COLORS.map((c) => (
-                  <button key={c} onClick={() => setForm(f => ({ ...f, color: c }))} className={`w-7 h-7 rounded-full transition-transform ${form.color === c ? "ring-2 ring-offset-2 ring-offset-[#162236] scale-110" : "opacity-70 hover:opacity-100"}`} style={{ backgroundColor: c, ringColor: c }} />
+                  <button key={c} onClick={() => setForm(f => ({ ...f, color: c }))} className={`w-7 h-7 rounded-full transition-transform ${form.color === c ? "ring-2 ring-offset-2 ring-offset-[#162236] scale-110" : "opacity-70 hover:opacity-100"}`} style={{ backgroundColor: c }} />
                 ))}
               </div>
             </div>

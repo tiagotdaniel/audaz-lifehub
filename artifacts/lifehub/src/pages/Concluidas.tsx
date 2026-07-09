@@ -50,14 +50,14 @@ export default function Concluidas() {
                     </span>
                   )}
                   <span className="text-xs text-[#6B7A8D]">
-                    {format(new Date(task.updatedAt), "d MMM yyyy", { locale: ptBR })}
+                    {task.updatedAt ? format(new Date(task.updatedAt), "d MMM yyyy", { locale: ptBR }) : ""}
                   </span>
                 </div>
               </div>
-              {task.totalTimeSeconds > 0 && (
+              {(task.totalTimeSeconds ?? 0) > 0 && (
                 <div className="flex items-center gap-1 text-xs text-[#C9A84C] font-mono font-bold">
                   <Clock className="h-3 w-3" />
-                  {formatDuration(task.totalTimeSeconds)}
+                  {formatDuration(task.totalTimeSeconds ?? 0)}
                 </div>
               )}
             </div>

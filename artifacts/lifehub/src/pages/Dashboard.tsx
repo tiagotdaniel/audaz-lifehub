@@ -198,13 +198,13 @@ export default function Dashboard() {
                   <div className="flex justify-between items-start mb-2">
                     <p className="text-sm text-[#F0EBE3] font-medium">{goal.title}</p>
                     <span className="text-xs text-[#E53E3E] font-bold ml-2 shrink-0">
-                      {Math.round(goal.progressPercent)}%
+                      {Math.round(goal.progressPercent ?? 0)}%
                     </span>
                   </div>
                   <div className="h-1.5 rounded-full bg-[#0D1B2A] overflow-hidden">
                     <div
                       className="h-full rounded-full bg-[#E53E3E]"
-                      style={{ width: `${goal.progressPercent}%` }}
+                      style={{ width: `${goal.progressPercent ?? 0}%` }}
                     />
                   </div>
                   {goal.deadline && (

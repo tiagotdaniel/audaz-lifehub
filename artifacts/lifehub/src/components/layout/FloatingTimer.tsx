@@ -18,7 +18,7 @@ export default function FloatingTimer() {
   const qc = useQueryClient();
 
   const { data: task } = useGetTask(activeTaskId || "", {
-    query: { enabled: !!activeTaskId }
+    query: { enabled: !!activeTaskId, queryKey: getGetTaskQueryKey(activeTaskId || "") }
   });
 
   const pauseTaskMutation = usePauseTask();

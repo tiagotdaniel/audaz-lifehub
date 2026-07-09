@@ -1,0 +1,285 @@
+{
+  "project": "Audaz LifeHub",
+  "instruction": "Apply ALL the following changes to the existing Audaz LifeHub app. Do not rebuild from scratch. Modify the existing codebase. Implement every item listed below completely. All UI text must be in Brazilian Portuguese with correct spelling and accents. Do not ask for confirmation between items — execute all changes end to end.",
+
+  "typography": {
+    "headlines_and_titles": "Libre Baskerville (import from Google Fonts)",
+    "body": "Keep existing Inter font",
+    "apply_to": ["page titles", "section headers", "modal titles", "sidebar section labels", "landing page headings"]
+  },
+
+  "fixes": {
+    "spelling_and_accents": "Fix ALL spelling errors and missing accents throughout the entire app. Review every label, button, placeholder, empty state, toast notification, and error message. Examples: 'adicionar' not 'adiocionar', 'definir' not 'deifnir', 'exclusivos' not 'excluisovos', 'corporativo' not 'coorporativo'. Use correct Brazilian Portuguese in all UI text."
+  },
+
+  "changes": [
+
+    {
+      "id": "C01",
+      "feature": "Delete Task (permanent)",
+      "description": "Add a permanent delete option to each task, separate from the existing 'Cancelar' (soft delete). In the task context menu or task detail modal, show two options: 'Cancelar tarefa' (sets status=cancelled) and 'Excluir permanentemente' (hard deletes the record from DB). The permanent delete must show a confirmation dialog: 'Tem certeza? Esta ação não pode ser desfeita.' with buttons 'Cancelar' and 'Excluir'. API: DELETE /api/tasks/:id (hard delete).",
+      "affected_files": ["TaskItem.tsx", "TaskDetail.tsx", "server/routes/tasks.ts"]
+    },
+
+    {
+      "id": "C02",
+      "feature": "Time input detection in task creation",
+      "description": "When user types a time expression in the quick-add input (e.g. '21h', '21:00', '09pm', '14h30', '9:30am'), automatically set that as the task's scheduled start time (dueDate time portion). Show a preview badge 'Início às 21:00' below the input immediately. This is in addition to the existing date detection. Combine date + time if both are present: 'amanhã às 21h' → tomorrow 21:00.",
+      "affected_files": ["QuickAdd.tsx", "lib/dateParser.ts"]
+    },
+
+    {
+      "id": "C03",
+      "feature": "Timer controls: play, pause, stop, reset",
+      "description": "Expand the floating timer widget to have four controls: ▶ Play (resume if paused), ⏸ Pause, ⏹ Stop (saves session, ends timer), 🔄 Reset (discards current session time, keeps task in executing state, restarts from 00:00:00). The timer auto-starts when user clicks 'Executar' on a task. All four states must be reflected in the task status: executing / paused. Stop saves TimeSession to DB. Reset only resets the local counter without saving.",
+      "affected_files": ["FloatingTimer.tsx", "store/timerStore.ts", "server/routes/tasks.ts"]
+    },
+
+    {
+      "id": "C04",
+      "feature": "Priority shortcut in task input",
+      "description": "When user types 'P1', 'P2', 'P3', or 'P4' (case-insensitive) anywhere in the quick-add input, automatically detect and set that priority level, then remove the token from the title text. Show the selected priority badge updating in real time below the input. Example: typing 'Reunião com cliente P2 amanhã' → sets priority=2, title becomes 'Reunião com cliente amanhã'.",
+      "affected_files": ["QuickAdd.tsx", "lib/dateParser.ts"]
+    },
+
+    {
+      "id": "C05",
+      "feature": "Ctrl+N popup modal for task creation",
+      "description": "Ctrl+N (and Cmd+N on Mac) must open a centered popup modal overlay with the FULL task creation form (same fields as the main quick-add but in a modal). The modal must have: title input with natural language parsing, priority selector, sector selector, due date picker, time picker, snooze options, attachment upload, #sector and @mention triggers. Pressing Escape closes it. This modal must work from ANY page in the app, including when user is on Goals, Projects, Settings, etc.",
+      "affected_files": ["App.tsx", "components/tasks/QuickAddModal.tsx (new file)"]
+    },
+
+    {
+      "id": "C06",
+      "feature": "Task due date: completion deadline field",
+      "description": "Add a 'Prazo de conclusão' field to task creation and task detail. This is separate from the scheduled start time. Show a date+time picker. Display the deadline in the task card as '📅 Prazo: DD/MM às HH:MM'. If deadline has passed and task is not done, show the deadline in red with '⚠ Atrasada'.",
+      "affected_files": ["QuickAdd.tsx", "QuickAddModal.tsx", "TaskItem.tsx", "TaskDetail.tsx", "prisma/schema.prisma", "server/routes/tasks.ts"]
+    },
+
+    {
+      "id": "C07",
+      "feature": "Snooze / reschedule shortcuts",
+      "description": "In task creation form and in task detail, add a 'Adiar para:' section with four quick buttons: 'Amanhã' (+1 day, same time), 'Mais adiante' (+2 days), 'Final de semana' (next Saturday), 'Próxima semana' (next Monday). Clicking updates the dueDate field visually and saves on submit. Also available as a right-click or swipe context action on task items in the list.",
+      "affected_files": ["QuickAdd.tsx", "QuickAddModal.tsx", "TaskDetail.tsx", "TaskItem.tsx"]
+    },
+
+    {
+      "id": "C08",
+      "feature": "Notification settings in app settings",
+      "description": "In Settings page, add a 'Notificações' section with: reminder timing options (checkboxes, multiple allowed): 5min, 10min, 25min, 30min, 1h, 2h, 5h, 1 dia before deadline. Default: 30min. These become the default reminder options for new tasks. User can still override per-task. Save to user preferences in DB (notifPrefs JSON field).",
+      "affected_files": ["SettingsPage.tsx", "server/routes/users.ts"]
+    },
+
+    {
+      "id": "C09",
+      "feature": "# trigger for sector selection",
+      "description": "In any task text input, when user types '#', show an inline dropdown with available sectors: Pessoal, Empresarial, Novos Projetos, + any custom sectors. Selecting one sets the task's sector and inserts the sector name as a styled chip in the input (like Notion's @ mention). The # token is removed from the final title. Also support '#agenda' as a special command (see C20).",
+      "affected_files": ["QuickAdd.tsx", "QuickAddModal.tsx", "components/tasks/MentionDropdown.tsx (new)"]
+    },
+
+    {
+      "id": "C10",
+      "feature": "@ trigger for member mentions",
+      "description": "In any task text input, when user types '@', show an inline dropdown with team members (fetched from /api/team/members). Selecting a member: adds them as a task assignee, inserts '@Nome' as a styled chip in the input. Multiple members can be mentioned. Members are notified (via email/push) when mentioned. Store as taskAssignees relation in DB.",
+      "schema_addition": "model TaskAssignee { id String @id @default(uuid()); taskId String; task Task @relation(...); userId String; user User @relation(...); createdAt DateTime @default(now()) }",
+      "affected_files": ["QuickAdd.tsx", "QuickAddModal.tsx", "MentionDropdown.tsx", "prisma/schema.prisma", "server/routes/tasks.ts"]
+    },
+
+    {
+      "id": "C11",
+      "feature": "@@ trigger for task-to-task linking",
+      "description": "In any task text input, when user types '@@', show an inline dropdown with existing tasks (search by title, fetch from /api/tasks?search=). Selecting a task creates a TaskLink relation between the current task and the selected one. Display linked tasks in task detail as 'Tarefas relacionadas' with clickable links that open the related task detail.",
+      "schema_addition": "model TaskLink { id String @id @default(uuid()); taskId String; linkedTaskId String; createdAt DateTime @default(now()) }",
+      "affected_files": ["QuickAdd.tsx", "QuickAddModal.tsx", "MentionDropdown.tsx", "TaskDetail.tsx", "prisma/schema.prisma", "server/routes/tasks.ts"]
+    },
+
+    {
+      "id": "C12",
+      "feature": "Projects: folder structure inside Novos Projetos tab",
+      "description": "In the Projects page, each project is displayed as a folder card. When user clicks a project folder, it opens the project's inner view showing its tasks, team, goals, and checklists. The sidebar 'Projetos' nav item expands to show sub-items for each active project. Projects created under 'Novos Projetos' sector are visually grouped under that section.",
+      "affected_files": ["ProjectsPage.tsx", "ProjectCard.tsx", "Sidebar.tsx"]
+    },
+
+    {
+      "id": "C13",
+      "feature": "Enhanced project creation form",
+      "description": "Project creation modal must include ALL these fields: Nome (text), Descrição (textarea), Cor (color picker), Prazo (date picker), Categoria (radio: Pessoal / Profissional), Membros (multi-select from team members, invite by email if not found), Meta do projeto (text: what does success look like?), Checklist inicial (user can add checklist items using '[] ' prefix — each line starting with '[] ' becomes a ChecklistItem). Save all to DB.",
+      "schema_addition": "model ChecklistItem { id String @id @default(uuid()); projectId String; project Project @relation(...); taskId String?; task Task? @relation(...); title String; done Boolean @default(false); order Int @default(0); createdAt DateTime @default(now()) }",
+      "affected_files": ["ProjectsPage.tsx", "components/projects/ProjectCreateModal.tsx (new)", "prisma/schema.prisma", "server/routes/projects.ts"]
+    },
+
+    {
+      "id": "C14",
+      "feature": "Task attachments: images, PDFs, links",
+      "description": "In task creation and task detail, add an attachment section supporting: PNG upload, JPG upload, PDF upload (store in Replit's object storage or as base64 blob in DB), clickable URL links (user pastes URL, shown as preview card with favicon + title). Max file size: 10MB. Display attachments in task card as small thumbnail icons. In task detail show full previews. API: POST /api/tasks/:id/attachments, GET /api/tasks/:id/attachments, DELETE /api/attachments/:id.",
+      "schema_addition": "model TaskAttachment { id String @id @default(uuid()); taskId String; task Task @relation(...); type String; fileName String?; fileUrl String?; linkUrl String?; linkTitle String?; createdAt DateTime @default(now()) }",
+      "affected_files": ["TaskDetail.tsx", "QuickAddModal.tsx", "server/routes/attachments.ts (new)", "prisma/schema.prisma"]
+    },
+
+    {
+      "id": "C15",
+      "feature": "Productivity onboarding questionnaire",
+      "description": "On first task creation after signup, intercept and show a 10-question onboarding quiz before the task is saved. Questions must map to: avg hours worked per week, avg time per task type (email, meeting, deep work, admin), self-rated productivity level (1-10), biggest time wasters, work style (morning/night person), interruptions per day, tools currently used, goals for the next 90 days, team size, industry. After submission, calculate a 'Índice de Produtividade Basal' score (0-100) and a 'Horas recuperáveis por semana' estimate. Store in user profile. Show a results screen before proceeding to task creation.",
+      "schema_addition": "model ProductivityProfile { id String @id @default(uuid()); userId String @unique; user User @relation(...); baselineScore Int; recoverableHours Float; rawAnswers Json; createdAt DateTime @default(now()) }",
+      "affected_files": ["components/onboarding/ProductivityQuiz.tsx (new)", "App.tsx", "server/routes/users.ts", "prisma/schema.prisma"]
+    },
+
+    {
+      "id": "C16",
+      "feature": "Productivity thermometer widget",
+      "description": "Add a visual thermometer/gauge widget (use SVG) to the Dashboard and sidebar footer. It shows 'Eficiência Recuperada' as a percentage and 'X horas/semana salvas' based on: (tasks completed on time × avg task duration) compared to the user's baseline from the onboarding quiz. Update in real time as tasks are completed. Colors: cold (below 40%) = blue-accent, warm (40-70%) = gold, hot (above 70%) = green.",
+      "affected_files": ["components/widgets/ProductivityThermometer.tsx (new)", "Dashboard.tsx", "Sidebar.tsx"]
+    },
+
+    {
+      "id": "C17",
+      "feature": "Navigation: add Metas to top bar",
+      "description": "In the top navigation bar (where task categories are shown), add 'Metas' as a tab alongside the existing category tabs. Clicking it navigates to the Goals page. Keep it consistent with the existing tab styling (gold underline on active).",
+      "affected_files": ["Header.tsx", "layout/TopNav.tsx"]
+    },
+
+    {
+      "id": "C18",
+      "feature": "Collapsible sidebar",
+      "description": "Add a toggle button (chevron arrow ‹ / ›) at the bottom of the sidebar. When collapsed: sidebar shrinks to 52px wide, showing only icons (no labels). When expanded: sidebar is full width (210px) with icons + labels. Persist preference in localStorage. Animate with CSS transition (width: 0.25s ease).",
+      "affected_files": ["Sidebar.tsx", "layout/Layout.tsx"]
+    },
+
+    {
+      "id": "C19",
+      "feature": "Google integrations in Settings",
+      "description": "In Settings, add a 'Conexões' section with three integration cards: Gmail (connect via Google OAuth scope mail.readonly), Google Drive (scope drive.readonly), Google Agenda (scope calendar). Each card shows: service icon, name, description, status (Conectado / Desconectado), Connect/Disconnect button. Store OAuth tokens per service in DB (encrypted). When Gmail is connected: send email notification for overdue/completed tasks. When Drive connected: allow picking files as task attachments. When Calendar connected: enable #agenda command and add a 'Google Agenda' item in sidebar.",
+      "schema_addition": "model UserIntegration { id String @id @default(uuid()); userId String; service String; accessToken String; refreshToken String?; expiresAt DateTime?; createdAt DateTime @default(now()) @@unique([userId, service]) }",
+      "affected_files": ["SettingsPage.tsx", "server/routes/integrations.ts (new)", "prisma/schema.prisma"]
+    },
+
+    {
+      "id": "C20",
+      "feature": "#agenda command",
+      "description": "When user types '#agenda' in task input, it flags the task to be added to Google Calendar on save (requires Google Calendar integration connected). On task save: create a Google Calendar event via Calendar API with task title, dueDate as event start, +1h as end, description from task. Show a small 'Google Agenda' badge on the task card. If Calendar not connected, show inline prompt: 'Conecte o Google Agenda nas configurações para usar este comando.'",
+      "affected_files": ["QuickAdd.tsx", "QuickAddModal.tsx", "MentionDropdown.tsx", "server/routes/integrations.ts", "server/lib/googleCalendar.ts (new)"]
+    },
+
+    {
+      "id": "C21",
+      "feature": "Google Agenda sidebar tab",
+      "description": "When Google Calendar is connected, add 'Google Agenda' as a menu item in the sidebar (below all task items). This page embeds/mirrors the user's Google Calendar events for the current week in a read-only view styled with the app's design tokens (navy/gold). Show events as cards with time, title, and a button 'Criar tarefa a partir deste evento'.",
+      "affected_files": ["Sidebar.tsx", "pages/GoogleAgendaPage.tsx (new)", "server/routes/integrations.ts"]
+    },
+
+    {
+      "id": "C22",
+      "feature": "Granular notification settings",
+      "description": "In Settings > Notificações, expand to allow user to configure WHAT is notified and WHERE (push/email/whatsapp). Create a grid: rows = event types, columns = channels. Event types: Nova tarefa adicionada, Tarefa atualizada, Novo anexo, Tarefa atrasada, Tarefa próxima do prazo, Tarefa concluída, Membro adicionado à equipe, Menção em tarefa (@), Nova mensagem de tarefa, Convite de projeto recebido. Channels: Push (app), Email (Gmail), WhatsApp. Each cell is a toggle. Save to notifPrefs JSON in user profile.",
+      "affected_files": ["SettingsPage.tsx", "server/routes/users.ts"]
+    },
+
+    {
+      "id": "C23",
+      "feature": "Projects: Team sub-tab",
+      "description": "Inside each project view, add a 'Equipe' tab (alongside Tasks, Goals, Timeline). The Equipe tab shows: list of current members with avatar, name, role (Admin/Membro), and task count. Button 'Adicionar membro' that sends an email invitation. Members can be assigned roles. Show pending invitations with status 'Convite enviado'. Admin can remove members.",
+      "affected_files": ["pages/ProjectDetailPage.tsx", "components/projects/ProjectTeam.tsx (new)", "server/routes/team.ts (new)"]
+    },
+
+    {
+      "id": "C24",
+      "feature": "Team invitation flow with promo codes",
+      "description": "When 'Adicionar membro' is clicked: send invitation email to the address entered. Email contains a unique invitation link: https://audazlifehub.com/invite?token={uuid}&project={projectId}. When recipient clicks the link: they see the Audaz LifeHub invitation acceptance page showing the project name, inviter name, and a form to: accept the invitation, create account or login with Google, AND enter a promotional/referral code (optional field). Promo codes stored in DB table PromoCodes with: code, discountType (percent/free_months), discountValue, maxUses, usedCount, expiresAt.",
+      "schema_addition": "model Invitation { id String @id @default(uuid()); email String; projectId String; invitedBy String; token String @unique; status String @default('pending'); createdAt DateTime @default(now()); expiresAt DateTime } model PromoCode { id String @id @default(uuid()); code String @unique; discountType String; discountValue Float; maxUses Int @default(1); usedCount Int @default(0); expiresAt DateTime? }",
+      "affected_files": ["pages/InvitePage.tsx (new)", "server/routes/invitations.ts (new)", "server/lib/email.ts (new)", "prisma/schema.prisma"]
+    },
+
+    {
+      "id": "C25",
+      "feature": "Subscription plans",
+      "description": "Add a Plans/Pricing section in Settings and on the Landing Page. Four plans: (1) Gratuito: uso pessoal, sem equipe, max 50 tarefas ativas; (2) Profissional: R$ 29/mês, uso profissional, até 4 membros de equipe, integrações Google; (3) Corporativo: R$ 79/mês, até 10 membros, relatórios avançados, suporte prioritário; (4) Personalizado: 'Entre em contato', exibe formulário de contato. Gate features in backend middleware: check user.plan before allowing team member additions, integration connections, etc. Store plan in User model.",
+      "schema_addition": "Add field 'plan' String @default('free') to User model. Add field 'planExpiresAt' DateTime? to User model.",
+      "affected_files": ["SettingsPage.tsx", "LandingPage.tsx", "server/middleware/planGate.ts (new)", "prisma/schema.prisma"]
+    },
+
+    {
+      "id": "C26",
+      "feature": "Landing page",
+      "description": "Create a full landing page at route '/' (shown to logged-out users). Logged-in users are redirected to '/dashboard'. Landing page sections: (1) Hero: headline 'Organize sua vida. Execute com precisão.' + CTA 'Começar gratuitamente' + app screenshot mockup; (2) Benefícios: 6 benefit cards with icons; (3) Funcionalidades: feature list with screenshots; (4) Diferenciais: what makes Audaz LifeHub unique vs Todoist/Notion; (5) Planos: pricing table with 4 plans (see C25); (6) Depoimentos: 3 placeholder testimonials; (7) CTA final: 'Comece agora — é grátis'; (8) Footer with links. Use design tokens (navy bg, gold accents, Libre Baskerville headlines).",
+      "affected_files": ["pages/LandingPage.tsx (new)", "App.tsx"]
+    },
+
+    {
+      "id": "C27",
+      "feature": "Responsive mobile + widget support",
+      "description": "Make the entire app fully responsive for mobile (320px–768px). Mobile layout: bottom navigation bar replacing sidebar (icons only: Home, Hoje, Projetos, Metas, Menu). Sidebar becomes a slide-in drawer on mobile. All modals become full-screen bottom sheets on mobile. Task cards stack vertically, full width. Add PWA widget manifest entries: 'shortcuts' for 'Nova Tarefa' and 'Hoje'. Add a web widget definition (widgetDefinition in manifest.json) for a simple 'Tarefas de Hoje' widget showing next 3 tasks. For desktop: ensure sidebar collapse works and all grid layouts adjust to window width.",
+      "affected_files": ["client/src/App.tsx", "components/layout/MobileNav.tsx (new)", "client/index.html", "public/manifest.json"]
+    },
+
+    {
+      "id": "C28",
+      "feature": "Browser extension redirect in Settings",
+      "description": "In Settings, add a section 'Extensão de Navegador' with: description 'Adicione tarefas ao Audaz LifeHub direto do seu navegador', icons for Chrome and Firefox, buttons 'Instalar no Chrome' (links to Chrome Web Store URL placeholder: https://chrome.google.com/webstore/detail/audaz-lifehub) and 'Instalar no Firefox' (placeholder URL). Also show a QR code generated from the Chrome store URL using a QR library.",
+      "affected_files": ["SettingsPage.tsx"]
+    },
+
+    {
+      "id": "C29",
+      "feature": "Browser extension (separate build)",
+      "description": "Create a browser extension in folder /extension/ with the following: manifest.json (Manifest V3), popup.html styled with Audaz LifeHub design tokens (navy + gold), popup shows: app logo, quick-add input with date parsing (include chrono-node bundled), priority selector P1-P4, sector selector, submit button 'Adicionar Tarefa'. On submit: POST to https://audazlifehub.com/api/tasks with JWT from localStorage. Also add a content script that adds a small 'Add to Audaz' button on Gmail emails and Google Calendar events. Extension files: /extension/manifest.json, /extension/popup.html, /extension/popup.js, /extension/content.js, /extension/background.js, /extension/icons/ (16, 32, 48, 128px — use gold circle with 'A' letter as SVG).",
+      "affected_files": ["/extension/ (new folder with all files)"]
+    }
+  ],
+
+  "database_migrations": {
+    "instruction": "After making schema changes, run: npx prisma migrate dev --name v2_updates",
+    "new_models": ["TaskAssignee", "TaskLink", "TaskAttachment", "ChecklistItem", "ProductivityProfile", "UserIntegration", "Invitation", "PromoCode"],
+    "modified_models": ["User (add plan, planExpiresAt)", "Task (add deadlineAt, hasCalendarEvent)", "Project (add category, goal, members)"]
+  },
+
+  "env_additions": {
+    "GOOGLE_GMAIL_SCOPE": "https://www.googleapis.com/auth/gmail.readonly",
+    "GOOGLE_DRIVE_SCOPE": "https://www.googleapis.com/auth/drive.readonly",
+    "GOOGLE_CALENDAR_SCOPE": "https://www.googleapis.com/auth/calendar",
+    "SENDGRID_API_KEY": "for sending invitation emails",
+    "APP_URL": "https://your-replit-url.replit.app"
+  },
+
+  "implementation_order": [
+    "C01 — Delete task",
+    "C04 — Priority shortcut P1-P4 in input",
+    "C02 — Time detection in input",
+    "C06 — Task deadline field",
+    "C07 — Snooze shortcuts",
+    "C09 — # sector trigger",
+    "C10 — @ member mention trigger",
+    "C11 — @@ task link trigger",
+    "C05 — Ctrl+N popup modal",
+    "C03 — Timer play/pause/stop/reset",
+    "C14 — Task attachments",
+    "C13 — Enhanced project creation",
+    "C12 — Project folder structure",
+    "C23 — Project team sub-tab",
+    "C15 — Productivity onboarding quiz",
+    "C16 — Productivity thermometer",
+    "C17 — Metas in top nav",
+    "C18 — Collapsible sidebar",
+    "C08 — Notification timing settings",
+    "C22 — Granular notification settings",
+    "C19 — Google integrations in Settings",
+    "C20 — #agenda command",
+    "C21 — Google Agenda sidebar tab",
+    "C24 — Team invitation + promo codes",
+    "C25 — Subscription plans",
+    "C26 — Landing page",
+    "C27 — Mobile responsive + widgets",
+    "C28 — Browser extension redirect",
+    "C29 — Browser extension build",
+    "typography — Apply Libre Baskerville to all headlines",
+    "fixes — Fix all spelling and accents"
+  ],
+
+  "design_rules": {
+    "colors": "Use ONLY existing design tokens. No new colors.",
+    "fonts": "Libre Baskerville for all h1/h2/h3/h4 and modal titles. Inter for body/labels.",
+    "language": "100% Brazilian Portuguese. No English visible in UI.",
+    "icons": "Use Lucide React icons throughout.",
+    "animations": "Keep transitions subtle: 0.2s ease. No heavy animations.",
+    "mobile_first": "All new components must be mobile-responsive by default."
+  }
+}

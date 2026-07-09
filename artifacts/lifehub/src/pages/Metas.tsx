@@ -137,12 +137,12 @@ export default function Metas() {
                 <div className="h-2 rounded-full bg-[#162236] overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all ${goal.isAtRisk ? "bg-[#E53E3E]" : "bg-[#C9A84C]"}`}
-                    style={{ width: `${goal.progressPercent}%` }}
+                    style={{ width: `${goal.progressPercent ?? 0}%` }}
                   />
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-semibold" style={{ color: goal.isAtRisk ? "#E53E3E" : "#C9A84C" }}>
-                    {Math.round(goal.progressPercent)}%
+                    {Math.round(goal.progressPercent ?? 0)}%
                   </span>
                   {goal.isAtRisk && (
                     <span className="text-xs text-[#E53E3E] font-bold">EM RISCO</span>
