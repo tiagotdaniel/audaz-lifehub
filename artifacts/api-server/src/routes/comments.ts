@@ -7,7 +7,7 @@ import { randomUUID } from "crypto";
 const router = Router();
 
 router.get("/tasks/:taskId", requireAuth, async (req, res) => {
-  const { taskId } = req.params;
+  const { taskId } = req.params as Record<string, string>;
   const userId = req.userId!;
   const comments = await db
     .select({ comment: taskCommentsTable, user: usersTable })
@@ -18,7 +18,7 @@ router.get("/tasks/:taskId", requireAuth, async (req, res) => {
 });
 
 router.post("/tasks/:taskId", requireAuth, async (req, res) => {
-  const { taskId } = req.params;
+  const { taskId } = req.params as Record<string, string>;
   const userId = req.userId!;
   const { content, parentId, mentionedUserIds, attachments } = req.body;
   if (!content?.trim()) { res.status(400).json({ error: "Content required" }); return; }
@@ -34,7 +34,7 @@ router.post("/tasks/:taskId", requireAuth, async (req, res) => {
 });
 
 router.delete("/:id", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const userId = req.userId!;
   await db.delete(taskCommentsTable).where(and(eq(taskCommentsTable.id, id), eq(taskCommentsTable.userId, userId)));
   res.json({ success: true });

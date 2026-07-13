@@ -39,7 +39,7 @@ router.get("/days", requireAuth, async (req, res) => {
 
 router.put("/days/:dayOfWeek", requireAuth, async (req, res) => {
   const userId = req.userId!;
-  const dayOfWeek = parseInt(req.params.dayOfWeek);
+  const dayOfWeek = parseInt(req.params.dayOfWeek as string);
   const { exercises } = req.body;
   const existing = await db.select().from(workoutDaysTable).where(and(eq(workoutDaysTable.userId, userId), eq(workoutDaysTable.dayOfWeek, dayOfWeek)));
   if (existing.length > 0) {
@@ -79,7 +79,7 @@ router.get("/fitness-log", requireAuth, async (req, res) => {
 
 router.put("/fitness-log/:date", requireAuth, async (req, res) => {
   const userId = req.userId!;
-  const { date } = req.params;
+  const { date } = req.params as Record<string, string>;
   const { trainedMinutes, kcal, carbsG, proteinG, fatG, sugarG, waterMl } = req.body;
   const existing = await db.select().from(dailyFitnessLogsTable).where(and(eq(dailyFitnessLogsTable.userId, userId), eq(dailyFitnessLogsTable.date, date)));
   const values = {

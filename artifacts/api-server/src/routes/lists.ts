@@ -47,7 +47,7 @@ router.post("/", requireAuth, async (req, res) => {
 });
 
 router.patch("/:id", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const userId = req.userId!;
   const updates: Record<string, unknown> = {};
   const fields = ["name", "description", "color", "resetSchedule"] as const;
@@ -62,14 +62,14 @@ router.patch("/:id", requireAuth, async (req, res) => {
 });
 
 router.delete("/:id", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const userId = req.userId!;
   await db.delete(listsTable).where(and(eq(listsTable.id, id), eq(listsTable.userId, userId)));
   res.json({ success: true });
 });
 
 router.post("/:listId/items", requireAuth, async (req, res) => {
-  const { listId } = req.params;
+  const { listId } = req.params as Record<string, string>;
   const userId = req.userId!;
   const { title, description, price, position } = req.body;
   const id = randomUUID();
@@ -78,7 +78,7 @@ router.post("/:listId/items", requireAuth, async (req, res) => {
 });
 
 router.patch("/:listId/items/:itemId", requireAuth, async (req, res) => {
-  const { listId, itemId } = req.params;
+  const { listId, itemId } = req.params as Record<string, string>;
   const userId = req.userId!;
   const updates = req.body;
   if (updates.checked !== undefined) updates.checkedAt = updates.checked ? new Date() : null;
@@ -88,14 +88,14 @@ router.patch("/:listId/items/:itemId", requireAuth, async (req, res) => {
 });
 
 router.delete("/:listId/items/:itemId", requireAuth, async (req, res) => {
-  const { listId, itemId } = req.params;
+  const { listId, itemId } = req.params as Record<string, string>;
   const userId = req.userId!;
   await db.delete(listItemsTable).where(and(eq(listItemsTable.id, itemId), eq(listItemsTable.listId, listId), eq(listItemsTable.userId, userId)));
   res.json({ success: true });
 });
 
 router.post("/:listId/reset", requireAuth, async (req, res) => {
-  const { listId } = req.params;
+  const { listId } = req.params as Record<string, string>;
   const userId = req.userId!;
   await db.update(listItemsTable).set({ checked: false, checkedAt: null }).where(and(eq(listItemsTable.listId, listId), eq(listItemsTable.userId, userId)));
   await db.update(listsTable).set({ lastResetAt: new Date() }).where(and(eq(listsTable.id, listId), eq(listsTable.userId, userId)));

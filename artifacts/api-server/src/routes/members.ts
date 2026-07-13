@@ -35,7 +35,7 @@ router.post("/", requireAuth, async (req, res) => {
 });
 
 router.patch("/:id", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const ownerId = req.userId!;
   const { role } = req.body;
   if (role && !VALID_ROLES.has(role)) { res.status(400).json({ error: "Papel inválido" }); return; }
@@ -45,7 +45,7 @@ router.patch("/:id", requireAuth, async (req, res) => {
 });
 
 router.delete("/:id", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const ownerId = req.userId!;
   await db.delete(workspaceMembersTable).where(and(eq(workspaceMembersTable.id, id), eq(workspaceMembersTable.ownerId, ownerId)));
   res.json({ success: true });

@@ -51,7 +51,7 @@ router.post("/", requireAuth, async (req, res) => {
 });
 
 router.patch("/:id", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const updates: Partial<typeof projectsTable.$inferInsert> = {};
   const fields = ["name", "description", "color", "status", "objective", "kpis", "attachments"] as const;
   for (const f of fields) {
@@ -66,7 +66,7 @@ router.patch("/:id", requireAuth, async (req, res) => {
 });
 
 router.delete("/:id", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const [project] = await db.select().from(projectsTable).where(and(eq(projectsTable.id, id), eq(projectsTable.userId, req.userId!)));
   if (!project) { res.status(404).json({ error: "Not found" }); return; }
   await db.delete(projectsTable).where(eq(projectsTable.id, id));

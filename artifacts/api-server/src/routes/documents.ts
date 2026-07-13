@@ -21,7 +21,7 @@ router.post("/", requireAuth, async (req, res) => {
 });
 
 router.get("/:id", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const userId = req.userId!;
   const [doc] = await db.select().from(documentsTable).where(and(eq(documentsTable.id, id), eq(documentsTable.userId, userId)));
   if (!doc) { res.status(404).json({ error: "Not found" }); return; }
@@ -29,7 +29,7 @@ router.get("/:id", requireAuth, async (req, res) => {
 });
 
 router.patch("/:id", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const userId = req.userId!;
   const { title, content, icon, parentId } = req.body;
   await db.update(documentsTable).set({
@@ -44,7 +44,7 @@ router.patch("/:id", requireAuth, async (req, res) => {
 });
 
 router.delete("/:id", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const userId = req.userId!;
   await db.delete(documentsTable).where(and(eq(documentsTable.id, id), eq(documentsTable.userId, userId)));
   res.json({ success: true });

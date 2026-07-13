@@ -21,7 +21,7 @@ router.post("/", requireAuth, async (req, res) => {
 });
 
 router.patch("/:id", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const userId = req.userId!;
   const { imageUrl, quote, position } = req.body;
   await db.update(dreamBoardItemsTable).set({ ...(imageUrl && { imageUrl }), ...(quote !== undefined && { quote }), ...(position !== undefined && { position }) }).where(and(eq(dreamBoardItemsTable.id, id), eq(dreamBoardItemsTable.userId, userId)));
@@ -30,7 +30,7 @@ router.patch("/:id", requireAuth, async (req, res) => {
 });
 
 router.delete("/:id", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const userId = req.userId!;
   await db.delete(dreamBoardItemsTable).where(and(eq(dreamBoardItemsTable.id, id), eq(dreamBoardItemsTable.userId, userId)));
   res.json({ success: true });

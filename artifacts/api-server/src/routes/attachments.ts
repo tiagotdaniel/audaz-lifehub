@@ -7,7 +7,7 @@ import { randomUUID } from "crypto";
 const router = Router();
 
 router.get("/tasks/:taskId", requireAuth, async (req, res) => {
-  const { taskId } = req.params;
+  const { taskId } = req.params as Record<string, string>;
   const attachments = await db
     .select()
     .from(taskAttachmentsTable)
@@ -16,7 +16,7 @@ router.get("/tasks/:taskId", requireAuth, async (req, res) => {
 });
 
 router.post("/tasks/:taskId", requireAuth, async (req, res) => {
-  const { taskId } = req.params;
+  const { taskId } = req.params as Record<string, string>;
   const userId = req.userId!;
   const { name, url } = req.body;
   if (!name?.trim() || !url?.trim()) { res.status(400).json({ error: "name and url required" }); return; }
@@ -26,7 +26,7 @@ router.post("/tasks/:taskId", requireAuth, async (req, res) => {
 });
 
 router.delete("/:id", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const userId = req.userId!;
   await db.delete(taskAttachmentsTable).where(and(eq(taskAttachmentsTable.id, id), eq(taskAttachmentsTable.userId, userId)));
   res.json({ success: true });

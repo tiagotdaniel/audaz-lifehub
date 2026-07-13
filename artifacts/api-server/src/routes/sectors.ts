@@ -23,7 +23,7 @@ router.post("/", requireAuth, async (req, res) => {
 });
 
 router.patch("/:id", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const { label, color } = req.body;
   const updates: Partial<typeof sectorsTable.$inferInsert> = {};
   if (label !== undefined) updates.label = label;
@@ -36,7 +36,7 @@ router.patch("/:id", requireAuth, async (req, res) => {
 });
 
 router.delete("/:id", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const [sector] = await db.select().from(sectorsTable).where(and(eq(sectorsTable.id, id), eq(sectorsTable.userId, req.userId!)));
   if (!sector) { res.status(404).json({ error: "Not found" }); return; }
   await db.delete(sectorsTable).where(eq(sectorsTable.id, id));

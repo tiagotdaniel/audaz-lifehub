@@ -29,7 +29,7 @@ router.post("/", requireAuth, async (req, res) => {
 });
 
 router.patch("/:id", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const updates: Partial<typeof milestonesTable.$inferInsert> = {};
   if (req.body.title !== undefined) updates.title = req.body.title;
   if (req.body.done !== undefined) updates.done = req.body.done;
@@ -43,7 +43,7 @@ router.patch("/:id", requireAuth, async (req, res) => {
 });
 
 router.delete("/:id", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const [milestone] = await db.select().from(milestonesTable).where(and(eq(milestonesTable.id, id), eq(milestonesTable.userId, req.userId!)));
   if (!milestone) { res.status(404).json({ error: "Not found" }); return; }
   await db.delete(milestonesTable).where(eq(milestonesTable.id, id));

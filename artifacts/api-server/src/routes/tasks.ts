@@ -81,7 +81,7 @@ router.post("/", requireAuth, async (req, res) => {
 });
 
 router.get("/:id", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const userId = req.userId!;
 
   const [row] = await db
@@ -112,7 +112,7 @@ router.get("/:id", requireAuth, async (req, res) => {
 });
 
 router.patch("/:id", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const userId = req.userId!;
   const updates: Partial<typeof tasksTable.$inferInsert> = { updatedAt: new Date() };
 
@@ -130,7 +130,7 @@ router.patch("/:id", requireAuth, async (req, res) => {
 });
 
 router.delete("/:id", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const userId = req.userId!;
   const [existing] = await db.select().from(tasksTable).where(and(eq(tasksTable.id, id), eq(tasksTable.userId, userId)));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
@@ -141,7 +141,7 @@ router.delete("/:id", requireAuth, async (req, res) => {
 });
 
 router.patch("/:id/execute", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const userId = req.userId!;
 
   // Stop any currently executing task
@@ -182,7 +182,7 @@ router.patch("/:id/execute", requireAuth, async (req, res) => {
 });
 
 router.patch("/:id/pause", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const userId = req.userId!;
 
   // Pause is a status flip only -- the open session (if any) is left running
@@ -193,7 +193,7 @@ router.patch("/:id/pause", requireAuth, async (req, res) => {
 });
 
 router.patch("/:id/stop", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const userId = req.userId!;
 
   const activeSessions = await db
@@ -212,7 +212,7 @@ router.patch("/:id/stop", requireAuth, async (req, res) => {
 });
 
 router.patch("/:id/done", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const userId = req.userId!;
 
   // End any active sessions

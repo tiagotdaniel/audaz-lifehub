@@ -21,7 +21,7 @@ router.post("/accounts", requireAuth, async (req, res) => {
 });
 
 router.patch("/accounts/:id", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const userId = req.userId!;
   const { name, type, balance } = req.body;
   await db.update(financialAccountsTable).set({
@@ -34,7 +34,7 @@ router.patch("/accounts/:id", requireAuth, async (req, res) => {
 });
 
 router.delete("/accounts/:id", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const userId = req.userId!;
   await db.delete(financialAccountsTable).where(and(eq(financialAccountsTable.id, id), eq(financialAccountsTable.userId, userId)));
   res.json({ success: true });
@@ -58,7 +58,7 @@ router.post("/goals", requireAuth, async (req, res) => {
 });
 
 router.patch("/goals/:id", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const userId = req.userId!;
   const { name, targetAmount, currentAmount, deadline } = req.body;
   await db.update(financialGoalsTable).set({
@@ -72,7 +72,7 @@ router.patch("/goals/:id", requireAuth, async (req, res) => {
 });
 
 router.delete("/goals/:id", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const userId = req.userId!;
   await db.delete(financialGoalsTable).where(and(eq(financialGoalsTable.id, id), eq(financialGoalsTable.userId, userId)));
   res.json({ success: true });
@@ -111,7 +111,7 @@ router.post("/", requireAuth, async (req, res) => {
 });
 
 router.patch("/:id", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const userId = req.userId!;
   const { type, amount, description, category, date } = req.body;
   await db.update(financialEntriesTable).set({
@@ -126,7 +126,7 @@ router.patch("/:id", requireAuth, async (req, res) => {
 });
 
 router.delete("/:id", requireAuth, async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params as Record<string, string>;
   const userId = req.userId!;
   await db.delete(financialEntriesTable).where(and(eq(financialEntriesTable.id, id), eq(financialEntriesTable.userId, userId)));
   res.json({ success: true });
