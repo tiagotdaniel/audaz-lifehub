@@ -41,45 +41,51 @@ export async function requireAuth(
     const email = (clerkUser?.["email"] as string) || "";
     const avatarUrl = (clerkUser?.["picture"] as string) || null;
 
-    await db.insert(usersTable).values({
-      id,
-      clerkId: auth.userId,
-      name,
-      email,
-      avatarUrl,
-    });
+    // Serverless invocations can race here: several concurrent requests from
+    // the same brand-new user may all see "no user yet" at once. Only the
+    // request that actually wins the insert (empty result = lost the race,
+    // someone else already created it) creates the default sectors.
+    const [inserted] = await db
+      .insert(usersTable)
+      .values({ id, clerkId: auth.userId, name, email, avatarUrl })
+      .onConflictDoNothing({ target: usersTable.clerkId })
+      .returning();
 
-    user = await db
-      .select()
-      .from(usersTable)
-      .where(eq(usersTable.id, id))
-      .limit(1)
-      .then((r) => r[0]);
+    if (inserted) {
+      user = inserted;
 
-    const { sectorsTable } = await import("@workspace/db");
-    await db.insert(sectorsTable).values([
-      {
-        id: randomUUID(),
-        userId: id,
-        label: "Pessoal",
-        color: "#4CAF50",
-        isDefault: true,
-      },
-      {
-        id: randomUUID(),
-        userId: id,
-        label: "Empresarial",
-        color: "#2196F3",
-        isDefault: true,
-      },
-      {
-        id: randomUUID(),
-        userId: id,
-        label: "Novos Projetos",
-        color: "#9C27B0",
-        isDefault: true,
-      },
-    ]);
+      const { sectorsTable } = await import("@workspace/db");
+      await db.insert(sectorsTable).values([
+        {
+          id: randomUUID(),
+          userId: id,
+          label: "Pessoal",
+          color: "#4CAF50",
+          isDefault: true,
+        },
+        {
+          id: randomUUID(),
+          userId: id,
+          label: "Empresarial",
+          color: "#2196F3",
+          isDefault: true,
+        },
+        {
+          id: randomUUID(),
+          userId: id,
+          label: "Novos Projetos",
+          color: "#9C27B0",
+          isDefault: true,
+        },
+      ]);
+    } else {
+      user = await db
+        .select()
+        .from(usersTable)
+        .where(eq(usersTable.clerkId, auth.userId))
+        .limit(1)
+        .then((r) => r[0]);
+    }
   }
 
   req.userId = user.id;
