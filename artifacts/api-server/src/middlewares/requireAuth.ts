@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { getAuth } from "@clerk/express";
+import { getAuth, clerkClient } from "@clerk/express";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
@@ -33,13 +33,21 @@ export async function requireAuth(
 
   if (!user) {
     const id = randomUUID();
-    const clerkUser = await auth.sessionClaims;
-    const name =
-      (clerkUser?.["name"] as string) ||
-      (clerkUser?.["email"] as string) ||
-      "Usuário";
-    const email = (clerkUser?.["email"] as string) || "";
-    const avatarUrl = (clerkUser?.["picture"] as string) || null;
+
+    // Session claims are minimal by default (no email/name), so fetch the
+    // real profile from Clerk's API instead. Email is guaranteed non-empty
+    // here (falling back to a clerkId-derived placeholder) because the
+    // column is unique — an empty string would collide across every user
+    // whose Clerk profile has no email on file.
+    const clerkUser = await clerkClient.users.getUser(auth.userId);
+    const primaryEmail =
+      clerkUser.emailAddresses.find((e) => e.id === clerkUser.primaryEmailAddressId)?.emailAddress ??
+      clerkUser.emailAddresses[0]?.emailAddress ??
+      null;
+    const fullName = [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ").trim();
+    const name = fullName || primaryEmail || "Usuário";
+    const email = primaryEmail || `${auth.userId}@no-email.audazlifehub.local`;
+    const avatarUrl = clerkUser.imageUrl || null;
 
     // Serverless invocations can race here: several concurrent requests from
     // the same brand-new user may all see "no user yet" at once. Only the
