@@ -13,8 +13,11 @@ import workoutRouter from "./workout";
 import dreamBoardRouter from "./dream-board";
 import documentsRouter from "./documents";
 import commentsRouter from "./comments";
+import attachmentsRouter from "./attachments";
 import feedbackRouter from "./feedback";
 import streakRouter from "./streak";
+import membersRouter from "./members";
+import productivityProfileRouter from "./productivity-profile";
 
 const router = Router();
 
@@ -32,7 +35,10 @@ router.use("/workout", workoutRouter);
 router.use("/dream-board", dreamBoardRouter);
 router.use("/documents", documentsRouter);
 router.use("/comments", commentsRouter);
+router.use("/attachments", attachmentsRouter);
 router.use("/feedback", feedbackRouter);
 router.use("/streak", streakRouter);
+router.use("/members", membersRouter);
+router.use("/productivity-profile", productivityProfileRouter);
 
 export default router;

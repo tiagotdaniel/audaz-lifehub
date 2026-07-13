@@ -1,0 +1,32 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "api-server",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "set -a; source .env; set +a; export PORT=8080; npx pnpm --filter @workspace/api-server run dev"
+      ],
+      "port": 8080
+    },
+    {
+      "name": "lifehub",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "set -a; source .env; set +a; export PORT=5173; export BASE_PATH=/; npx pnpm --filter @workspace/lifehub run dev"
+      ],
+      "port": 5173
+    },
+    {
+      "name": "mockup-sandbox",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "set -a; source .env; set +a; export PORT=5174; export BASE_PATH=/; npx pnpm --filter @workspace/mockup-sandbox run dev"
+      ],
+      "port": 5174
+    }
+  ]
+}

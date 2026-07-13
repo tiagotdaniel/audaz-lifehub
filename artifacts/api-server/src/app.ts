@@ -36,8 +36,8 @@ app.use(
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 
 app.use(cors({ credentials: true, origin: true }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "12mb" }));
+app.use(express.urlencoded({ extended: true, limit: "12mb" }));
 
 app.use(
   clerkMiddleware((req) => ({
@@ -49,5 +49,14 @@ app.use(
 );
 
 app.use("/api", router);
+
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  if (err?.type === "entity.too.large") {
+    res.status(413).json({ error: "Arquivo muito grande. Tente uma imagem menor." });
+    return;
+  }
+  logger.error(err);
+  res.status(500).json({ error: "Erro interno do servidor." });
+});
 
 export default app;

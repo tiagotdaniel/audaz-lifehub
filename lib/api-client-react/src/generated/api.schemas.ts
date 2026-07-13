@@ -9,9 +9,13 @@ export interface HealthStatus {
   status: string;
 }
 
+export type UserNotifPrefsNotifGrid = {[key: string]: {[key: string]: boolean}};
+
 export type UserNotifPrefs = {
   push?: boolean;
   whatsapp?: boolean;
+  reminderTimings?: string[];
+  notifGrid?: UserNotifPrefsNotifGrid;
 };
 
 export interface User {
@@ -28,9 +32,13 @@ export interface User {
   createdAt?: string;
 }
 
+export type UserUpdateNotifPrefsNotifGrid = {[key: string]: {[key: string]: boolean}};
+
 export type UserUpdateNotifPrefs = {
   push?: boolean;
   whatsapp?: boolean;
+  reminderTimings?: string[];
+  notifGrid?: UserUpdateNotifPrefsNotifGrid;
 };
 
 export interface UserUpdate {
@@ -57,6 +65,17 @@ export interface SectorUpdate {
   color?: string;
 }
 
+export interface ProjectKpi {
+  name: string;
+  target: number;
+  current: number;
+}
+
+export interface ProjectAttachment {
+  name: string;
+  url: string;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -66,6 +85,10 @@ export interface Project {
   /** @nullable */
   deadline?: string | null;
   status: string;
+  /** @nullable */
+  objective?: string | null;
+  kpis?: ProjectKpi[];
+  attachments?: ProjectAttachment[];
   taskCount?: number;
   doneCount?: number;
   createdAt: string;
@@ -90,6 +113,8 @@ export interface Task {
   projectId?: string | null;
   /** @nullable */
   goalId?: string | null;
+  /** @nullable */
+  estimatedMinutes?: number | null;
   sector?: Sector | null;
   project?: Project | null;
   totalTimeSeconds?: number;
@@ -141,6 +166,8 @@ export interface TaskDetail {
   projectId?: string | null;
   /** @nullable */
   goalId?: string | null;
+  /** @nullable */
+  estimatedMinutes?: number | null;
   sector?: Sector | null;
   project?: Project | null;
   goal?: Goal | null;
@@ -165,6 +192,8 @@ export interface TaskInput {
   projectId?: string | null;
   /** @nullable */
   goalId?: string | null;
+  /** @nullable */
+  estimatedMinutes?: number | null;
 }
 
 export interface TaskUpdate {
@@ -184,6 +213,8 @@ export interface TaskUpdate {
   projectId?: string | null;
   /** @nullable */
   goalId?: string | null;
+  /** @nullable */
+  estimatedMinutes?: number | null;
 }
 
 export interface TaskSessionResult {
@@ -198,6 +229,10 @@ export interface ProjectInput {
   color?: string;
   /** @nullable */
   deadline?: string | null;
+  /** @nullable */
+  objective?: string | null;
+  kpis?: ProjectKpi[];
+  attachments?: ProjectAttachment[];
 }
 
 export interface ProjectUpdate {
@@ -208,6 +243,10 @@ export interface ProjectUpdate {
   /** @nullable */
   deadline?: string | null;
   status?: string;
+  /** @nullable */
+  objective?: string | null;
+  kpis?: ProjectKpi[];
+  attachments?: ProjectAttachment[];
 }
 
 export interface GoalInput {
@@ -260,6 +299,19 @@ export interface MilestoneUpdate {
 export interface DailyCount {
   date: string;
   count: number;
+}
+
+export interface TaskTimeEntry {
+  title: string;
+  minutes: number;
+}
+
+export interface ProductivityStats {
+  byTask: TaskTimeEntry[];
+  savedMinutes: number;
+  lostMinutes: number;
+  estimatedTotalSavedMinutes?: number | null;
+  daysSinceProfile?: number | null;
 }
 
 export interface WeeklyStats {

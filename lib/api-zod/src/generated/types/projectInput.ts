@@ -5,6 +5,8 @@
  * Audaz LifeHub API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { ProjectAttachment } from './projectAttachment';
+import type { ProjectKpi } from './projectKpi';
 
 export interface ProjectInput {
   name: string;
@@ -13,4 +15,8 @@ export interface ProjectInput {
   color?: string;
   /** @nullable */
   deadline?: string | null;
+  /** @nullable */
+  objective?: string | null;
+  kpis?: ProjectKpi[];
+  attachments?: ProjectAttachment[];
 }

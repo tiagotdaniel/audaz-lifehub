@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, tasksTable, sectorsTable, projectsTable, goalsTable, timeSessionsTable } from "@workspace/db";
+import { db, tasksTable, sectorsTable, projectsTable, goalsTable, timeSessionsTable, taskCommentsTable } from "@workspace/db";
 import { eq, and, gte, lte, sql } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
 import { randomUUID } from "crypto";
@@ -58,7 +58,7 @@ router.get("/", requireAuth, async (req, res) => {
 
 router.post("/", requireAuth, async (req, res) => {
   const userId = req.userId!;
-  const { title, description, priority, dueDate, reminderAt, reminderChannels, sectorId, projectId, goalId } = req.body;
+  const { title, description, priority, dueDate, reminderAt, reminderChannels, sectorId, projectId, goalId, estimatedMinutes } = req.body;
 
   const id = randomUUID();
   await db.insert(tasksTable).values({
@@ -73,6 +73,7 @@ router.post("/", requireAuth, async (req, res) => {
     sectorId: sectorId ?? null,
     projectId: projectId ?? null,
     goalId: goalId ?? null,
+    estimatedMinutes: estimatedMinutes ?? null,
   });
 
   const [task] = await db.select().from(tasksTable).where(eq(tasksTable.id, id));
@@ -115,7 +116,7 @@ router.patch("/:id", requireAuth, async (req, res) => {
   const userId = req.userId!;
   const updates: Partial<typeof tasksTable.$inferInsert> = { updatedAt: new Date() };
 
-  const fields = ["title", "description", "priority", "status", "sectorId", "projectId", "goalId", "reminderChannels"] as const;
+  const fields = ["title", "description", "priority", "status", "sectorId", "projectId", "goalId", "reminderChannels", "estimatedMinutes"] as const;
   for (const f of fields) {
     if (req.body[f] !== undefined) (updates as any)[f] = req.body[f];
   }
@@ -131,16 +132,9 @@ router.patch("/:id", requireAuth, async (req, res) => {
 router.delete("/:id", requireAuth, async (req, res) => {
   const { id } = req.params;
   const userId = req.userId!;
-  await db.update(tasksTable).set({ status: "cancelled", updatedAt: new Date() }).where(and(eq(tasksTable.id, id), eq(tasksTable.userId, userId)));
-  const [task] = await db.select().from(tasksTable).where(eq(tasksTable.id, id));
-  res.json({ ...task, sector: null, project: null, totalTimeSeconds: 0 });
-});
-
-router.delete("/:id/permanent", requireAuth, async (req, res) => {
-  const { id } = req.params;
-  const userId = req.userId!;
   const [existing] = await db.select().from(tasksTable).where(and(eq(tasksTable.id, id), eq(tasksTable.userId, userId)));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  await db.delete(taskCommentsTable).where(eq(taskCommentsTable.taskId, id));
   await db.delete(timeSessionsTable).where(eq(timeSessionsTable.taskId, id));
   await db.delete(tasksTable).where(and(eq(tasksTable.id, id), eq(tasksTable.userId, userId)));
   res.json({ success: true });
@@ -169,9 +163,17 @@ router.patch("/:id/execute", requireAuth, async (req, res) => {
     await db.update(tasksTable).set({ status: "pending", updatedAt: new Date() }).where(eq(tasksTable.id, t.id));
   }
 
-  // Start new session
-  const sessionId = randomUUID();
-  await db.insert(timeSessionsTable).values({ id: sessionId, taskId: id, userId, startedAt: new Date() });
+  // Reuse the task's own open session if one already exists (e.g. resuming from
+  // pause) so a single execute-to-done cycle only ever has one session row.
+  const [existingOpenSession] = await db
+    .select()
+    .from(timeSessionsTable)
+    .where(and(eq(timeSessionsTable.taskId, id), sql`${timeSessionsTable.endedAt} IS NULL`));
+
+  const sessionId = existingOpenSession?.id ?? randomUUID();
+  if (!existingOpenSession) {
+    await db.insert(timeSessionsTable).values({ id: sessionId, taskId: id, userId, startedAt: new Date() });
+  }
   await db.update(tasksTable).set({ status: "executing", updatedAt: new Date() }).where(and(eq(tasksTable.id, id), eq(tasksTable.userId, userId)));
 
   const [task] = await db.select().from(tasksTable).where(eq(tasksTable.id, id));
@@ -183,16 +185,8 @@ router.patch("/:id/pause", requireAuth, async (req, res) => {
   const { id } = req.params;
   const userId = req.userId!;
 
-  const activeSessions = await db
-    .select()
-    .from(timeSessionsTable)
-    .where(and(eq(timeSessionsTable.taskId, id), sql`${timeSessionsTable.endedAt} IS NULL`));
-
-  for (const s of activeSessions) {
-    const durationSeconds = Math.round((Date.now() - new Date(s.startedAt).getTime()) / 1000);
-    await db.update(timeSessionsTable).set({ endedAt: new Date(), durationSeconds }).where(eq(timeSessionsTable.id, s.id));
-  }
-
+  // Pause is a status flip only -- the open session (if any) is left running
+  // so the timer only truly starts once (on execute) and finishes once (on done).
   await db.update(tasksTable).set({ status: "paused", updatedAt: new Date() }).where(and(eq(tasksTable.id, id), eq(tasksTable.userId, userId)));
   const [task] = await db.select().from(tasksTable).where(eq(tasksTable.id, id));
   res.json({ ...task, sector: null, project: null, totalTimeSeconds: 0 });

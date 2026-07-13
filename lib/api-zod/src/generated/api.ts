@@ -29,7 +29,9 @@ export const GetMeResponse = zod.object({
   "timezone": zod.string().optional(),
   "notifPrefs": zod.object({
   "push": zod.boolean().optional(),
-  "whatsapp": zod.boolean().optional()
+  "whatsapp": zod.boolean().optional(),
+  "reminderTimings": zod.array(zod.string()).optional(),
+  "notifGrid": zod.record(zod.string(), zod.record(zod.string(), zod.boolean())).optional()
 }).optional(),
   "createdAt": zod.string().optional()
 })
@@ -43,7 +45,9 @@ export const UpdateMeBody = zod.object({
   "timezone": zod.string().optional(),
   "notifPrefs": zod.object({
   "push": zod.boolean().optional(),
-  "whatsapp": zod.boolean().optional()
+  "whatsapp": zod.boolean().optional(),
+  "reminderTimings": zod.array(zod.string()).optional(),
+  "notifGrid": zod.record(zod.string(), zod.record(zod.string(), zod.boolean())).optional()
 }).optional()
 })
 
@@ -57,7 +61,9 @@ export const UpdateMeResponse = zod.object({
   "timezone": zod.string().optional(),
   "notifPrefs": zod.object({
   "push": zod.boolean().optional(),
-  "whatsapp": zod.boolean().optional()
+  "whatsapp": zod.boolean().optional(),
+  "reminderTimings": zod.array(zod.string()).optional(),
+  "notifGrid": zod.record(zod.string(), zod.record(zod.string(), zod.boolean())).optional()
 }).optional(),
   "createdAt": zod.string().optional()
 })
@@ -89,6 +95,7 @@ export const GetTasksResponseItem = zod.object({
   "sectorId": zod.string().nullish(),
   "projectId": zod.string().nullish(),
   "goalId": zod.string().nullish(),
+  "estimatedMinutes": zod.number().nullish(),
   "sector": zod.union([zod.object({
   "id": zod.string(),
   "label": zod.string(),
@@ -102,6 +109,16 @@ export const GetTasksResponseItem = zod.object({
   "color": zod.string(),
   "deadline": zod.string().nullish(),
   "status": zod.string(),
+  "objective": zod.string().nullish(),
+  "kpis": zod.array(zod.object({
+  "name": zod.string(),
+  "target": zod.number(),
+  "current": zod.number()
+})).optional(),
+  "attachments": zod.array(zod.object({
+  "name": zod.string(),
+  "url": zod.string()
+})).optional(),
   "taskCount": zod.number().optional(),
   "doneCount": zod.number().optional(),
   "createdAt": zod.string()
@@ -127,7 +144,8 @@ export const CreateTaskBody = zod.object({
   "reminderChannels": zod.array(zod.string()).optional(),
   "sectorId": zod.string().nullish(),
   "projectId": zod.string().nullish(),
-  "goalId": zod.string().nullish()
+  "goalId": zod.string().nullish(),
+  "estimatedMinutes": zod.number().nullish()
 })
 
 export const CreateTaskResponse = zod.object({
@@ -143,6 +161,7 @@ export const CreateTaskResponse = zod.object({
   "sectorId": zod.string().nullish(),
   "projectId": zod.string().nullish(),
   "goalId": zod.string().nullish(),
+  "estimatedMinutes": zod.number().nullish(),
   "sector": zod.union([zod.object({
   "id": zod.string(),
   "label": zod.string(),
@@ -156,6 +175,16 @@ export const CreateTaskResponse = zod.object({
   "color": zod.string(),
   "deadline": zod.string().nullish(),
   "status": zod.string(),
+  "objective": zod.string().nullish(),
+  "kpis": zod.array(zod.object({
+  "name": zod.string(),
+  "target": zod.number(),
+  "current": zod.number()
+})).optional(),
+  "attachments": zod.array(zod.object({
+  "name": zod.string(),
+  "url": zod.string()
+})).optional(),
   "taskCount": zod.number().optional(),
   "doneCount": zod.number().optional(),
   "createdAt": zod.string()
@@ -186,6 +215,7 @@ export const GetTaskResponse = zod.object({
   "sectorId": zod.string().nullish(),
   "projectId": zod.string().nullish(),
   "goalId": zod.string().nullish(),
+  "estimatedMinutes": zod.number().nullish(),
   "sector": zod.union([zod.object({
   "id": zod.string(),
   "label": zod.string(),
@@ -199,6 +229,16 @@ export const GetTaskResponse = zod.object({
   "color": zod.string(),
   "deadline": zod.string().nullish(),
   "status": zod.string(),
+  "objective": zod.string().nullish(),
+  "kpis": zod.array(zod.object({
+  "name": zod.string(),
+  "target": zod.number(),
+  "current": zod.number()
+})).optional(),
+  "attachments": zod.array(zod.object({
+  "name": zod.string(),
+  "url": zod.string()
+})).optional(),
   "taskCount": zod.number().optional(),
   "doneCount": zod.number().optional(),
   "createdAt": zod.string()
@@ -246,7 +286,8 @@ export const UpdateTaskBody = zod.object({
   "reminderChannels": zod.array(zod.string()).optional(),
   "sectorId": zod.string().nullish(),
   "projectId": zod.string().nullish(),
-  "goalId": zod.string().nullish()
+  "goalId": zod.string().nullish(),
+  "estimatedMinutes": zod.number().nullish()
 })
 
 export const UpdateTaskResponse = zod.object({
@@ -262,6 +303,7 @@ export const UpdateTaskResponse = zod.object({
   "sectorId": zod.string().nullish(),
   "projectId": zod.string().nullish(),
   "goalId": zod.string().nullish(),
+  "estimatedMinutes": zod.number().nullish(),
   "sector": zod.union([zod.object({
   "id": zod.string(),
   "label": zod.string(),
@@ -275,6 +317,16 @@ export const UpdateTaskResponse = zod.object({
   "color": zod.string(),
   "deadline": zod.string().nullish(),
   "status": zod.string(),
+  "objective": zod.string().nullish(),
+  "kpis": zod.array(zod.object({
+  "name": zod.string(),
+  "target": zod.number(),
+  "current": zod.number()
+})).optional(),
+  "attachments": zod.array(zod.object({
+  "name": zod.string(),
+  "url": zod.string()
+})).optional(),
   "taskCount": zod.number().optional(),
   "doneCount": zod.number().optional(),
   "createdAt": zod.string()
@@ -305,6 +357,7 @@ export const DeleteTaskResponse = zod.object({
   "sectorId": zod.string().nullish(),
   "projectId": zod.string().nullish(),
   "goalId": zod.string().nullish(),
+  "estimatedMinutes": zod.number().nullish(),
   "sector": zod.union([zod.object({
   "id": zod.string(),
   "label": zod.string(),
@@ -318,6 +371,16 @@ export const DeleteTaskResponse = zod.object({
   "color": zod.string(),
   "deadline": zod.string().nullish(),
   "status": zod.string(),
+  "objective": zod.string().nullish(),
+  "kpis": zod.array(zod.object({
+  "name": zod.string(),
+  "target": zod.number(),
+  "current": zod.number()
+})).optional(),
+  "attachments": zod.array(zod.object({
+  "name": zod.string(),
+  "url": zod.string()
+})).optional(),
   "taskCount": zod.number().optional(),
   "doneCount": zod.number().optional(),
   "createdAt": zod.string()
@@ -349,6 +412,7 @@ export const ExecuteTaskResponse = zod.object({
   "sectorId": zod.string().nullish(),
   "projectId": zod.string().nullish(),
   "goalId": zod.string().nullish(),
+  "estimatedMinutes": zod.number().nullish(),
   "sector": zod.union([zod.object({
   "id": zod.string(),
   "label": zod.string(),
@@ -362,6 +426,16 @@ export const ExecuteTaskResponse = zod.object({
   "color": zod.string(),
   "deadline": zod.string().nullish(),
   "status": zod.string(),
+  "objective": zod.string().nullish(),
+  "kpis": zod.array(zod.object({
+  "name": zod.string(),
+  "target": zod.number(),
+  "current": zod.number()
+})).optional(),
+  "attachments": zod.array(zod.object({
+  "name": zod.string(),
+  "url": zod.string()
+})).optional(),
   "taskCount": zod.number().optional(),
   "doneCount": zod.number().optional(),
   "createdAt": zod.string()
@@ -401,6 +475,7 @@ export const PauseTaskResponse = zod.object({
   "sectorId": zod.string().nullish(),
   "projectId": zod.string().nullish(),
   "goalId": zod.string().nullish(),
+  "estimatedMinutes": zod.number().nullish(),
   "sector": zod.union([zod.object({
   "id": zod.string(),
   "label": zod.string(),
@@ -414,6 +489,16 @@ export const PauseTaskResponse = zod.object({
   "color": zod.string(),
   "deadline": zod.string().nullish(),
   "status": zod.string(),
+  "objective": zod.string().nullish(),
+  "kpis": zod.array(zod.object({
+  "name": zod.string(),
+  "target": zod.number(),
+  "current": zod.number()
+})).optional(),
+  "attachments": zod.array(zod.object({
+  "name": zod.string(),
+  "url": zod.string()
+})).optional(),
   "taskCount": zod.number().optional(),
   "doneCount": zod.number().optional(),
   "createdAt": zod.string()
@@ -444,6 +529,7 @@ export const StopTaskResponse = zod.object({
   "sectorId": zod.string().nullish(),
   "projectId": zod.string().nullish(),
   "goalId": zod.string().nullish(),
+  "estimatedMinutes": zod.number().nullish(),
   "sector": zod.union([zod.object({
   "id": zod.string(),
   "label": zod.string(),
@@ -457,6 +543,16 @@ export const StopTaskResponse = zod.object({
   "color": zod.string(),
   "deadline": zod.string().nullish(),
   "status": zod.string(),
+  "objective": zod.string().nullish(),
+  "kpis": zod.array(zod.object({
+  "name": zod.string(),
+  "target": zod.number(),
+  "current": zod.number()
+})).optional(),
+  "attachments": zod.array(zod.object({
+  "name": zod.string(),
+  "url": zod.string()
+})).optional(),
   "taskCount": zod.number().optional(),
   "doneCount": zod.number().optional(),
   "createdAt": zod.string()
@@ -487,6 +583,7 @@ export const CompleteTaskResponse = zod.object({
   "sectorId": zod.string().nullish(),
   "projectId": zod.string().nullish(),
   "goalId": zod.string().nullish(),
+  "estimatedMinutes": zod.number().nullish(),
   "sector": zod.union([zod.object({
   "id": zod.string(),
   "label": zod.string(),
@@ -500,6 +597,16 @@ export const CompleteTaskResponse = zod.object({
   "color": zod.string(),
   "deadline": zod.string().nullish(),
   "status": zod.string(),
+  "objective": zod.string().nullish(),
+  "kpis": zod.array(zod.object({
+  "name": zod.string(),
+  "target": zod.number(),
+  "current": zod.number()
+})).optional(),
+  "attachments": zod.array(zod.object({
+  "name": zod.string(),
+  "url": zod.string()
+})).optional(),
   "taskCount": zod.number().optional(),
   "doneCount": zod.number().optional(),
   "createdAt": zod.string()
@@ -583,6 +690,16 @@ export const GetProjectsResponseItem = zod.object({
   "color": zod.string(),
   "deadline": zod.string().nullish(),
   "status": zod.string(),
+  "objective": zod.string().nullish(),
+  "kpis": zod.array(zod.object({
+  "name": zod.string(),
+  "target": zod.number(),
+  "current": zod.number()
+})).optional(),
+  "attachments": zod.array(zod.object({
+  "name": zod.string(),
+  "url": zod.string()
+})).optional(),
   "taskCount": zod.number().optional(),
   "doneCount": zod.number().optional(),
   "createdAt": zod.string()
@@ -597,7 +714,17 @@ export const CreateProjectBody = zod.object({
   "name": zod.string(),
   "description": zod.string().nullish(),
   "color": zod.string().optional(),
-  "deadline": zod.string().nullish()
+  "deadline": zod.string().nullish(),
+  "objective": zod.string().nullish(),
+  "kpis": zod.array(zod.object({
+  "name": zod.string(),
+  "target": zod.number(),
+  "current": zod.number()
+})).optional(),
+  "attachments": zod.array(zod.object({
+  "name": zod.string(),
+  "url": zod.string()
+})).optional()
 })
 
 export const CreateProjectResponse = zod.object({
@@ -607,6 +734,16 @@ export const CreateProjectResponse = zod.object({
   "color": zod.string(),
   "deadline": zod.string().nullish(),
   "status": zod.string(),
+  "objective": zod.string().nullish(),
+  "kpis": zod.array(zod.object({
+  "name": zod.string(),
+  "target": zod.number(),
+  "current": zod.number()
+})).optional(),
+  "attachments": zod.array(zod.object({
+  "name": zod.string(),
+  "url": zod.string()
+})).optional(),
   "taskCount": zod.number().optional(),
   "doneCount": zod.number().optional(),
   "createdAt": zod.string()
@@ -625,7 +762,17 @@ export const UpdateProjectBody = zod.object({
   "description": zod.string().nullish(),
   "color": zod.string().optional(),
   "deadline": zod.string().nullish(),
-  "status": zod.string().optional()
+  "status": zod.string().optional(),
+  "objective": zod.string().nullish(),
+  "kpis": zod.array(zod.object({
+  "name": zod.string(),
+  "target": zod.number(),
+  "current": zod.number()
+})).optional(),
+  "attachments": zod.array(zod.object({
+  "name": zod.string(),
+  "url": zod.string()
+})).optional()
 })
 
 export const UpdateProjectResponse = zod.object({
@@ -635,6 +782,16 @@ export const UpdateProjectResponse = zod.object({
   "color": zod.string(),
   "deadline": zod.string().nullish(),
   "status": zod.string(),
+  "objective": zod.string().nullish(),
+  "kpis": zod.array(zod.object({
+  "name": zod.string(),
+  "target": zod.number(),
+  "current": zod.number()
+})).optional(),
+  "attachments": zod.array(zod.object({
+  "name": zod.string(),
+  "url": zod.string()
+})).optional(),
   "taskCount": zod.number().optional(),
   "doneCount": zod.number().optional(),
   "createdAt": zod.string()
@@ -655,6 +812,16 @@ export const DeleteProjectResponse = zod.object({
   "color": zod.string(),
   "deadline": zod.string().nullish(),
   "status": zod.string(),
+  "objective": zod.string().nullish(),
+  "kpis": zod.array(zod.object({
+  "name": zod.string(),
+  "target": zod.number(),
+  "current": zod.number()
+})).optional(),
+  "attachments": zod.array(zod.object({
+  "name": zod.string(),
+  "url": zod.string()
+})).optional(),
   "taskCount": zod.number().optional(),
   "doneCount": zod.number().optional(),
   "createdAt": zod.string()
@@ -853,6 +1020,21 @@ export const GetAnnualStatsResponse = zod.object({
   "date": zod.string(),
   "count": zod.number()
 }))
+})
+
+
+/**
+ * @summary Per-task tracked time, plus time saved/lost vs estimates
+ */
+export const GetProductivityStatsResponse = zod.object({
+  "byTask": zod.array(zod.object({
+  "title": zod.string(),
+  "minutes": zod.number()
+})),
+  "savedMinutes": zod.number(),
+  "lostMinutes": zod.number(),
+  "estimatedTotalSavedMinutes": zod.number().nullish(),
+  "daysSinceProfile": zod.number().nullish()
 })
 
 

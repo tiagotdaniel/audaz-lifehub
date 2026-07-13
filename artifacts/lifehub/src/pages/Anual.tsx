@@ -54,44 +54,44 @@ export default function Anual() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-serif font-bold text-[#F0EBE3] mb-1">Visao Anual</h1>
-        <p className="text-[#A89880] text-sm">Historico de tarefas concluidas nos ultimos 365 dias</p>
+        <h1 className="text-3xl font-serif font-bold text-[var(--text-primary)] mb-1">Visao Anual</h1>
+        <p className="text-[var(--text-muted)] text-sm">Historico de tarefas concluidas nos ultimos 365 dias</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-[#1A2B42] rounded-xl p-5 border border-[#162236]">
+        <div className="bg-[var(--surface-2)] rounded-xl p-5 border border-[var(--surface-1)]">
           <p className="text-3xl font-bold text-[#C9A84C] font-mono">{totalDone}</p>
-          <p className="text-xs text-[#6B7A8D] mt-1">Tarefas concluidas</p>
+          <p className="text-xs text-[var(--text-subtle)] mt-1">Tarefas concluidas</p>
         </div>
-        <div className="bg-[#1A2B42] rounded-xl p-5 border border-[#162236]">
+        <div className="bg-[var(--surface-2)] rounded-xl p-5 border border-[var(--surface-1)]">
           <p className="text-3xl font-bold text-[#C9A84C] font-mono">{activeDays}</p>
-          <p className="text-xs text-[#6B7A8D] mt-1">Dias ativos</p>
+          <p className="text-xs text-[var(--text-subtle)] mt-1">Dias ativos</p>
         </div>
-        <div className="bg-[#1A2B42] rounded-xl p-5 border border-[#162236]">
+        <div className="bg-[var(--surface-2)] rounded-xl p-5 border border-[var(--surface-1)]">
           <p className="text-3xl font-bold text-[#C9A84C] font-mono">
             {heatmap.length > 0 ? Math.round((activeDays / heatmap.length) * 100) : 0}%
           </p>
-          <p className="text-xs text-[#6B7A8D] mt-1">Taxa de consistencia</p>
+          <p className="text-xs text-[var(--text-subtle)] mt-1">Taxa de consistencia</p>
         </div>
-        <div className="bg-[#1A2B42] rounded-xl p-5 border border-[#162236]">
+        <div className="bg-[var(--surface-2)] rounded-xl p-5 border border-[var(--surface-1)]">
           <p className="text-3xl font-bold text-[#C9A84C] font-mono">
             {activeDays > 0 ? Math.round(totalDone / activeDays * 10) / 10 : 0}
           </p>
-          <p className="text-xs text-[#6B7A8D] mt-1">Media por dia ativo</p>
+          <p className="text-xs text-[var(--text-subtle)] mt-1">Media por dia ativo</p>
         </div>
       </div>
 
       {isLoading ? (
-        <div className="text-center py-12 text-[#6B7A8D]">Carregando...</div>
+        <div className="text-center py-12 text-[var(--text-subtle)]">Carregando...</div>
       ) : (
-        <div className="bg-[#1A2B42] rounded-xl p-6 border border-[#162236] overflow-x-auto">
-          <h2 className="text-sm font-semibold text-[#A89880] uppercase tracking-widest mb-4">Mapa de Calor</h2>
+        <div className="bg-[var(--surface-2)] rounded-xl p-6 border border-[var(--surface-1)] overflow-x-auto">
+          <h2 className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-widest mb-4">Mapa de Calor</h2>
 
           {/* Month labels */}
           <div className="flex gap-1 mb-1 ml-5">
             {months.map((month, i) => (
               <div key={i} className="w-3 shrink-0 text-center">
-                <span className="text-xs text-[#6B7A8D]" style={{ fontSize: "9px" }}>{month}</span>
+                <span className="text-xs text-[var(--text-subtle)]" style={{ fontSize: "9px" }}>{month}</span>
               </div>
             ))}
           </div>
@@ -101,7 +101,7 @@ export default function Anual() {
             <div className="flex flex-col gap-1 mr-1">
               {["D", "S", "T", "Q", "Q", "S", "S"].map((d, i) => (
                 <div key={i} className="h-3 w-3 flex items-center justify-center">
-                  <span className="text-[#6B7A8D]" style={{ fontSize: "9px" }}>{i % 2 === 1 ? d : ""}</span>
+                  <span className="text-[var(--text-subtle)]" style={{ fontSize: "9px" }}>{i % 2 === 1 ? d : ""}</span>
                 </div>
               ))}
             </div>
@@ -129,11 +129,11 @@ export default function Anual() {
 
           {/* Legend */}
           <div className="flex items-center gap-2 mt-4 justify-end">
-            <span className="text-xs text-[#6B7A8D]">Menos</span>
+            <span className="text-xs text-[var(--text-subtle)]">Menos</span>
             {[0, 1, 2, 3, 4].map((count) => (
               <div key={count} className="w-3 h-3 rounded-sm" style={{ backgroundColor: getColor(count) }} />
             ))}
-            <span className="text-xs text-[#6B7A8D]">Mais</span>
+            <span className="text-xs text-[var(--text-subtle)]">Mais</span>
           </div>
         </div>
       )}

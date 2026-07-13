@@ -1,10 +1,82 @@
 import { Router } from "express";
-import { db, financialEntriesTable } from "@workspace/db";
+import { db, financialEntriesTable, financialAccountsTable, financialGoalsTable } from "@workspace/db";
 import { eq, and, gte, lte, sql } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
 import { randomUUID } from "crypto";
 
 const router = Router();
+
+// Caixas e investimentos (registered before "/:id" to avoid path collision)
+router.get("/accounts", requireAuth, async (req, res) => {
+  const accounts = await db.select().from(financialAccountsTable).where(eq(financialAccountsTable.userId, req.userId!));
+  res.json(accounts);
+});
+
+router.post("/accounts", requireAuth, async (req, res) => {
+  const userId = req.userId!;
+  const { name, type, balance } = req.body;
+  const id = randomUUID();
+  const [account] = await db.insert(financialAccountsTable).values({ id, userId, name, type: type ?? "caixa", balance: balance ?? 0 }).returning();
+  res.status(201).json(account);
+});
+
+router.patch("/accounts/:id", requireAuth, async (req, res) => {
+  const { id } = req.params;
+  const userId = req.userId!;
+  const { name, type, balance } = req.body;
+  await db.update(financialAccountsTable).set({
+    ...(name !== undefined && { name }),
+    ...(type !== undefined && { type }),
+    ...(balance !== undefined && { balance }),
+  }).where(and(eq(financialAccountsTable.id, id), eq(financialAccountsTable.userId, userId)));
+  const [account] = await db.select().from(financialAccountsTable).where(eq(financialAccountsTable.id, id));
+  res.json(account);
+});
+
+router.delete("/accounts/:id", requireAuth, async (req, res) => {
+  const { id } = req.params;
+  const userId = req.userId!;
+  await db.delete(financialAccountsTable).where(and(eq(financialAccountsTable.id, id), eq(financialAccountsTable.userId, userId)));
+  res.json({ success: true });
+});
+
+// Metas financeiras (registered before "/:id" to avoid path collision)
+router.get("/goals", requireAuth, async (req, res) => {
+  const goals = await db.select().from(financialGoalsTable).where(eq(financialGoalsTable.userId, req.userId!));
+  res.json(goals);
+});
+
+router.post("/goals", requireAuth, async (req, res) => {
+  const userId = req.userId!;
+  const { name, targetAmount, currentAmount, deadline } = req.body;
+  const id = randomUUID();
+  const [goal] = await db.insert(financialGoalsTable).values({
+    id, userId, name, targetAmount, currentAmount: currentAmount ?? 0,
+    deadline: deadline ? new Date(deadline) : null,
+  }).returning();
+  res.status(201).json(goal);
+});
+
+router.patch("/goals/:id", requireAuth, async (req, res) => {
+  const { id } = req.params;
+  const userId = req.userId!;
+  const { name, targetAmount, currentAmount, deadline } = req.body;
+  await db.update(financialGoalsTable).set({
+    ...(name !== undefined && { name }),
+    ...(targetAmount !== undefined && { targetAmount }),
+    ...(currentAmount !== undefined && { currentAmount }),
+    ...(deadline !== undefined && { deadline: deadline ? new Date(deadline) : null }),
+  }).where(and(eq(financialGoalsTable.id, id), eq(financialGoalsTable.userId, userId)));
+  const [goal] = await db.select().from(financialGoalsTable).where(eq(financialGoalsTable.id, id));
+  res.json(goal);
+});
+
+router.delete("/goals/:id", requireAuth, async (req, res) => {
+  const { id } = req.params;
+  const userId = req.userId!;
+  await db.delete(financialGoalsTable).where(and(eq(financialGoalsTable.id, id), eq(financialGoalsTable.userId, userId)));
+  res.json({ success: true });
+});
 
 router.get("/", requireAuth, async (req, res) => {
   const userId = req.userId!;

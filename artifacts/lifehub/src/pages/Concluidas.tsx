@@ -19,17 +19,17 @@ export default function Concluidas() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-serif font-bold text-[#F0EBE3] mb-1">Concluidas</h1>
-        <p className="text-[#A89880] text-sm">{tasks?.length ?? 0} tarefa{(tasks?.length ?? 0) !== 1 ? "s" : ""} concluida{(tasks?.length ?? 0) !== 1 ? "s" : ""}</p>
+        <h1 className="text-3xl font-serif font-bold text-[var(--text-primary)] mb-1">Concluidas</h1>
+        <p className="text-[var(--text-muted)] text-sm">{tasks?.length ?? 0} tarefa{(tasks?.length ?? 0) !== 1 ? "s" : ""} concluida{(tasks?.length ?? 0) !== 1 ? "s" : ""}</p>
       </div>
 
       {isLoading ? (
-        <div className="text-center py-20 text-[#6B7A8D]">Carregando...</div>
+        <div className="text-center py-20 text-[var(--text-subtle)]">Carregando...</div>
       ) : tasks?.length === 0 ? (
         <div className="text-center py-20">
           <CheckCircle2 className="h-12 w-12 text-[#38A169] mx-auto mb-3 opacity-40" />
-          <p className="text-[#6B7A8D]">Nenhuma tarefa concluida ainda.</p>
-          <p className="text-sm text-[#6B7A8D] mt-1">Suas conquistas aparecerao aqui!</p>
+          <p className="text-[var(--text-subtle)]">Nenhuma tarefa concluida ainda.</p>
+          <p className="text-sm text-[var(--text-subtle)] mt-1">Suas conquistas aparecerao aqui!</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -38,18 +38,18 @@ export default function Concluidas() {
               key={task.id}
               data-testid={`task-done-${task.id}`}
               onClick={() => setSelectedTaskId(task.id)}
-              className="flex items-center gap-3 p-4 bg-[#1A2B42] rounded-xl border border-[#162236] hover:border-[#38A169]/40 cursor-pointer transition-all"
+              className="flex items-center gap-3 p-4 bg-[var(--surface-2)] rounded-xl border border-[var(--surface-1)] hover:border-[#38A169]/40 cursor-pointer transition-all"
             >
               <CheckCircle2 className="h-5 w-5 text-[#38A169] shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-[#A89880] line-through">{task.title}</p>
+                <p className="text-sm text-[var(--text-muted)] line-through">{task.title}</p>
                 <div className="flex items-center gap-2 mt-0.5">
                   {task.sector && (
                     <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ color: task.sector.color, backgroundColor: task.sector.color + "22" }}>
                       {task.sector.label}
                     </span>
                   )}
-                  <span className="text-xs text-[#6B7A8D]">
+                  <span className="text-xs text-[var(--text-subtle)]">
                     {task.updatedAt ? format(new Date(task.updatedAt), "d MMM yyyy", { locale: ptBR }) : ""}
                   </span>
                 </div>

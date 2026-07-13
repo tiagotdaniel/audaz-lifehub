@@ -31,6 +31,12 @@ export default function FloatingTimer() {
     return () => clearInterval(interval);
   }, [activeTaskId, tick]);
 
+  useEffect(() => {
+    if (task && (task.status === "done" || task.status === "cancelled")) {
+      reset();
+    }
+  }, [task, reset]);
+
   if (!activeTaskId || !task) return null;
 
   const handlePauseToggle = () => {
@@ -44,9 +50,10 @@ export default function FloatingTimer() {
       });
     } else {
       executeTaskMutation.mutate({ id: activeTaskId }, {
-        onSuccess: (res) => {
+        onSuccess: () => {
+          // Resuming continues the same open session -- keep the local
+          // elapsed time running instead of resetting it back to zero.
           setPaused(false);
-          useTimerStore.getState().setActive(activeTaskId, res.session.id);
           qc.invalidateQueries({ queryKey: getGetTasksQueryKey() });
         }
       });
@@ -67,26 +74,26 @@ export default function FloatingTimer() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 bg-[#162236] border border-[#C9A84C] shadow-2xl shadow-black/50 rounded-xl p-4 flex items-center gap-4 z-50 animate-in slide-in-from-bottom-5">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1A2B42] text-[#C9A84C]">
+    <div className="fixed bottom-6 right-6 bg-[var(--surface-1)] border border-[#C9A84C] shadow-2xl shadow-black/50 rounded-xl p-4 flex items-center gap-4 z-50 animate-in slide-in-from-bottom-5">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-2)] text-[#C9A84C]">
         <Timer className="h-5 w-5" />
       </div>
       
       <div className="min-w-0 max-w-[180px]">
-        <p className="text-xs text-[#A89880] font-medium mb-1 truncate">
+        <p className="text-xs text-[var(--text-muted)] font-medium mb-1 truncate">
           {task.project ? `${task.project.name} / ` : ''}{task.title}
         </p>
-        <p className={`text-2xl font-mono font-bold leading-none tracking-tight ${isPaused ? 'text-[#ED8936]' : 'text-[#C9A84C]'}`}>
+        <p className={`text-2xl font-mono font-bold leading-none tracking-tight ${isPaused ? 'text-[#ED8936]' : 'text-[#C9A84C] gold-glow'}`}>
           {formatTime(elapsedSeconds)}
         </p>
         {isPaused && <p className="text-xs text-[#ED8936] mt-0.5">Pausado</p>}
       </div>
 
-      <div className="flex items-center gap-1 pl-4 border-l border-[#1A2B42]">
+      <div className="flex items-center gap-1 pl-4 border-l border-[var(--surface-2)]">
         <Button
           size="icon"
           variant="ghost"
-          className="h-8 w-8 text-[#F0EBE3] hover:text-[#C9A84C] hover:bg-[#1A2B42]"
+          className="h-8 w-8 text-[var(--text-primary)] hover:text-[#C9A84C] hover:bg-[var(--surface-2)]"
           onClick={handlePauseToggle}
           disabled={pauseTaskMutation.isPending || executeTaskMutation.isPending}
           title={isPaused ? "Retomar" : "Pausar"}
@@ -96,7 +103,7 @@ export default function FloatingTimer() {
         <Button
           size="icon"
           variant="ghost"
-          className="h-8 w-8 text-[#A89880] hover:text-[#F0EBE3] hover:bg-[#1A2B42]"
+          className="h-8 w-8 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-2)]"
           onClick={handleReset}
           title="Reiniciar contagem"
         >
@@ -105,7 +112,7 @@ export default function FloatingTimer() {
         <Button
           size="icon"
           variant="ghost"
-          className="h-8 w-8 text-[#E53E3E] hover:text-[#E53E3E] hover:bg-[#1A2B42]"
+          className="h-8 w-8 text-[#E53E3E] hover:text-[#E53E3E] hover:bg-[var(--surface-2)]"
           onClick={handleStop}
           disabled={stopTaskMutation.isPending}
           title="Parar e salvar sessão"

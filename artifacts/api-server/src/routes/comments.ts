@@ -20,10 +20,15 @@ router.get("/tasks/:taskId", requireAuth, async (req, res) => {
 router.post("/tasks/:taskId", requireAuth, async (req, res) => {
   const { taskId } = req.params;
   const userId = req.userId!;
-  const { content } = req.body;
+  const { content, parentId, mentionedUserIds, attachments } = req.body;
   if (!content?.trim()) { res.status(400).json({ error: "Content required" }); return; }
   const id = randomUUID();
-  const [comment] = await db.insert(taskCommentsTable).values({ id, taskId, userId, content }).returning();
+  const [comment] = await db.insert(taskCommentsTable).values({
+    id, taskId, userId, content,
+    parentId: parentId ?? null,
+    mentionedUserIds: mentionedUserIds ?? [],
+    attachments: attachments ?? [],
+  }).returning();
   const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
   res.status(201).json({ ...comment, author: user ? { name: user.name, avatarUrl: user.avatarUrl } : null });
 });

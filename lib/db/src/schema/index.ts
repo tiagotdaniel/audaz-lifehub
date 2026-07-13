@@ -48,6 +48,7 @@ export const projectsTable = pgTable("projects", {
   status: text("status").notNull().default("active"),
   objective: text("objective"),
   kpis: jsonb("kpis").notNull().default([]),
+  attachments: jsonb("attachments").notNull().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -81,6 +82,7 @@ export const tasksTable = pgTable("tasks", {
   description: text("description"),
   priority: integer("priority").notNull().default(4),
   status: text("status").notNull().default("pending"),
+  estimatedMinutes: integer("estimated_minutes"),
   dueDate: timestamp("due_date", { withTimezone: true }),
   reminderAt: timestamp("reminder_at", { withTimezone: true }),
   reminderSent: boolean("reminder_sent").notNull().default(false),
@@ -131,6 +133,7 @@ export const listsTable = pgTable("lists", {
   color: text("color").notNull().default("#C9A84C"),
   resetSchedule: text("reset_schedule").notNull().default("none"),
   lastResetAt: timestamp("last_reset_at", { withTimezone: true }).defaultNow(),
+  deadline: timestamp("deadline", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -164,6 +167,29 @@ export const financialEntriesTable = pgTable("financial_entries", {
 
 export type FinancialEntry = typeof financialEntriesTable.$inferSelect;
 
+export const financialAccountsTable = pgTable("financial_accounts", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  type: text("type").notNull().default("caixa"),
+  balance: real("balance").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type FinancialAccount = typeof financialAccountsTable.$inferSelect;
+
+export const financialGoalsTable = pgTable("financial_goals", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  targetAmount: real("target_amount").notNull(),
+  currentAmount: real("current_amount").notNull().default(0),
+  deadline: timestamp("deadline", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type FinancialGoal = typeof financialGoalsTable.$inferSelect;
+
 export const dreamBoardItemsTable = pgTable("dream_board_items", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
@@ -192,11 +218,25 @@ export const taskCommentsTable = pgTable("task_comments", {
   id: text("id").primaryKey(),
   taskId: text("task_id").notNull().references(() => tasksTable.id, { onDelete: "cascade" }),
   userId: text("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+  parentId: text("parent_id"),
   content: text("content").notNull(),
+  mentionedUserIds: text("mentioned_user_ids").array().notNull().default([]),
+  attachments: jsonb("attachments").notNull().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export type TaskComment = typeof taskCommentsTable.$inferSelect;
+
+export const taskAttachmentsTable = pgTable("task_attachments", {
+  id: text("id").primaryKey(),
+  taskId: text("task_id").notNull().references(() => tasksTable.id, { onDelete: "cascade" }),
+  userId: text("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  url: text("url").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type TaskAttachment = typeof taskAttachmentsTable.$inferSelect;
 
 export const workoutDaysTable = pgTable("workout_days", {
   id: text("id").primaryKey(),
@@ -213,10 +253,28 @@ export const userShapeProfilesTable = pgTable("user_shape_profiles", {
   age: integer("age"),
   heightCm: real("height_cm"),
   weightKg: real("weight_kg"),
+  goalWeightKg: real("goal_weight_kg"),
+  goalDate: text("goal_date"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export type UserShapeProfile = typeof userShapeProfilesTable.$inferSelect;
+
+export const dailyFitnessLogsTable = pgTable("daily_fitness_logs", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+  date: text("date").notNull(),
+  trainedMinutes: integer("trained_minutes").notNull().default(0),
+  kcal: real("kcal").notNull().default(0),
+  carbsG: real("carbs_g").notNull().default(0),
+  proteinG: real("protein_g").notNull().default(0),
+  fatG: real("fat_g").notNull().default(0),
+  sugarG: real("sugar_g").notNull().default(0),
+  waterMl: real("water_ml").notNull().default(0),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type DailyFitnessLog = typeof dailyFitnessLogsTable.$inferSelect;
 
 export const userStreaksTable = pgTable("user_streaks", {
   userId: text("user_id").primaryKey().references(() => usersTable.id, { onDelete: "cascade" }),
@@ -227,13 +285,37 @@ export const userStreaksTable = pgTable("user_streaks", {
 
 export type UserStreak = typeof userStreaksTable.$inferSelect;
 
+export const productivityProfilesTable = pgTable("productivity_profiles", {
+  userId: text("user_id").primaryKey().references(() => usersTable.id, { onDelete: "cascade" }),
+  dailyWorkHours: real("daily_work_hours").notNull(),
+  tasksPerDayEstimate: integer("tasks_per_day_estimate").notNull(),
+  estimatedTimeLostMinutes: integer("estimated_time_lost_minutes").notNull(),
+  productivityRating: integer("productivity_rating").notNull(),
+  completedAt: timestamp("completed_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type ProductivityProfile = typeof productivityProfilesTable.$inferSelect;
+
 export const feedbackTable = pgTable("feedback", {
   id: text("id").primaryKey(),
   userId: text("user_id").references(() => usersTable.id, { onDelete: "set null" }),
   type: text("type").notNull().default("bug"),
   message: text("message").notNull(),
   email: text("email"),
+  attachments: jsonb("attachments").notNull().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export type Feedback = typeof feedbackTable.$inferSelect;
+
+export const workspaceMembersTable = pgTable("workspace_members", {
+  id: text("id").primaryKey(),
+  ownerId: text("owner_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+  email: text("email").notNull(),
+  role: text("role").notNull().default("member"),
+  status: text("status").notNull().default("pending"),
+  invitedUserId: text("invited_user_id").references(() => usersTable.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type WorkspaceMember = typeof workspaceMembersTable.$inferSelect;

@@ -27,6 +27,8 @@ export interface Task {
   projectId?: string | null;
   /** @nullable */
   goalId?: string | null;
+  /** @nullable */
+  estimatedMinutes?: number | null;
   sector?: Sector | null;
   project?: Project | null;
   totalTimeSeconds?: number;

@@ -33,7 +33,7 @@ router.get("/", requireAuth, async (req, res) => {
 });
 
 router.post("/", requireAuth, async (req, res) => {
-  const { name, description, color, deadline } = req.body;
+  const { name, description, color, deadline, objective, kpis, attachments } = req.body;
   const id = randomUUID();
   await db.insert(projectsTable).values({
     id,
@@ -42,6 +42,9 @@ router.post("/", requireAuth, async (req, res) => {
     description: description ?? null,
     color: color ?? "#C9A84C",
     deadline: deadline ? new Date(deadline) : null,
+    objective: objective ?? null,
+    kpis: kpis ?? [],
+    attachments: attachments ?? [],
   });
   const [project] = await db.select().from(projectsTable).where(eq(projectsTable.id, id));
   res.status(201).json({ ...project, taskCount: 0, doneCount: 0 });
@@ -50,7 +53,7 @@ router.post("/", requireAuth, async (req, res) => {
 router.patch("/:id", requireAuth, async (req, res) => {
   const { id } = req.params;
   const updates: Partial<typeof projectsTable.$inferInsert> = {};
-  const fields = ["name", "description", "color", "status"] as const;
+  const fields = ["name", "description", "color", "status", "objective", "kpis", "attachments"] as const;
   for (const f of fields) {
     if (req.body[f] !== undefined) updates[f] = req.body[f];
   }

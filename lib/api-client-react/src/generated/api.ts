@@ -29,6 +29,7 @@ import type {
   Milestone,
   MilestoneInput,
   MilestoneUpdate,
+  ProductivityStats,
   Project,
   ProjectInput,
   ProjectUpdate,
@@ -2242,6 +2243,83 @@ export function useGetAnnualStats<TData = Awaited<ReturnType<typeof getAnnualSta
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetAnnualStatsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetProductivityStatsUrl = () => {
+
+
+
+
+  return `/api/stats/productivity`
+}
+
+/**
+ * @summary Per-task tracked time, plus time saved/lost vs estimates
+ */
+export const getProductivityStats = async ( options?: RequestInit): Promise<ProductivityStats> => {
+
+  return customFetch<ProductivityStats>(getGetProductivityStatsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetProductivityStatsQueryKey = () => {
+    return [
+    `/api/stats/productivity`
+    ] as const;
+    }
+
+
+export const getGetProductivityStatsQueryOptions = <TData = Awaited<ReturnType<typeof getProductivityStats>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getProductivityStats>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProductivityStatsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProductivityStats>>> = ({ signal }) => getProductivityStats({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProductivityStats>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetProductivityStatsQueryResult = NonNullable<Awaited<ReturnType<typeof getProductivityStats>>>
+export type GetProductivityStatsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Per-task tracked time, plus time saved/lost vs estimates
+ */
+
+export function useGetProductivityStats<TData = Awaited<ReturnType<typeof getProductivityStats>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getProductivityStats>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetProductivityStatsQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

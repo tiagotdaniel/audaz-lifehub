@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, tasksTable, timeSessionsTable } from "@workspace/db";
+import { db, tasksTable, timeSessionsTable, productivityProfilesTable } from "@workspace/db";
 import { eq, and, gte, lte, sql } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
 
@@ -106,6 +106,55 @@ router.get("/annual", requireAuth, async (req, res) => {
   }
 
   res.json({ heatmap });
+});
+
+router.get("/productivity", requireAuth, async (req, res) => {
+  const userId = req.userId!;
+
+  const rows = await db
+    .select({
+      taskId: tasksTable.id,
+      title: tasksTable.title,
+      estimatedMinutes: tasksTable.estimatedMinutes,
+      status: tasksTable.status,
+      totalSeconds: sql<number>`COALESCE(SUM(${timeSessionsTable.durationSeconds}), 0)`,
+    })
+    .from(tasksTable)
+    .leftJoin(timeSessionsTable, eq(timeSessionsTable.taskId, tasksTable.id))
+    .where(eq(tasksTable.userId, userId))
+    .groupBy(tasksTable.id, tasksTable.title, tasksTable.estimatedMinutes, tasksTable.status);
+
+  const byTask = rows
+    .filter((r) => r.totalSeconds > 0)
+    .sort((a, b) => b.totalSeconds - a.totalSeconds)
+    .slice(0, 8)
+    .map((r) => ({ title: r.title, minutes: Math.round(r.totalSeconds / 60) }));
+
+  let savedMinutes = 0;
+  let lostMinutes = 0;
+  for (const r of rows) {
+    if (r.status !== "done" || !r.estimatedMinutes || r.totalSeconds === 0) continue;
+    const actualMinutes = r.totalSeconds / 60;
+    const diff = r.estimatedMinutes - actualMinutes;
+    if (diff > 0) savedMinutes += diff;
+    else lostMinutes += -diff;
+  }
+
+  const [profile] = await db.select().from(productivityProfilesTable).where(eq(productivityProfilesTable.userId, userId));
+  let estimatedTotalSavedMinutes: number | null = null;
+  let daysSinceProfile: number | null = null;
+  if (profile) {
+    daysSinceProfile = Math.max(1, Math.floor((Date.now() - new Date(profile.completedAt).getTime()) / 86400000));
+    estimatedTotalSavedMinutes = Math.round(profile.estimatedTimeLostMinutes * daysSinceProfile);
+  }
+
+  res.json({
+    byTask,
+    savedMinutes: Math.round(savedMinutes),
+    lostMinutes: Math.round(lostMinutes),
+    estimatedTotalSavedMinutes,
+    daysSinceProfile,
+  });
 });
 
 export default router;

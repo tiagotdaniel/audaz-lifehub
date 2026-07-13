@@ -21,6 +21,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     root.removeAttribute("data-theme");
     if (theme === "light") {
       root.setAttribute("data-theme", "light");
+      return undefined;
     } else if (theme === "auto") {
       const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
       if (!isDark) root.setAttribute("data-theme", "light");
@@ -32,6 +33,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       mq.addEventListener("change", listener);
       return () => mq.removeEventListener("change", listener);
     }
+    return undefined;
   }, [theme]);
 
   return <ThemeContext.Provider value={{ theme, setTheme }}>{children}</ThemeContext.Provider>;

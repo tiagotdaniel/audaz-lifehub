@@ -592,6 +592,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/AnnualStats"
 
+  /stats/productivity:
+    get:
+      operationId: getProductivityStats
+      tags: [stats]
+      summary: Per-task tracked time, plus time saved/lost vs estimates
+      responses:
+        "200":
+          description: Productivity stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductivityStats"
+
 components:
   schemas:
     HealthStatus:
@@ -627,6 +640,16 @@ components:
               type: boolean
             whatsapp:
               type: boolean
+            reminderTimings:
+              type: array
+              items:
+                type: string
+            notifGrid:
+              type: object
+              additionalProperties:
+                type: object
+                additionalProperties:
+                  type: boolean
         createdAt:
           type: string
 
@@ -644,6 +667,16 @@ components:
               type: boolean
             whatsapp:
               type: boolean
+            reminderTimings:
+              type: array
+              items:
+                type: string
+            notifGrid:
+              type: object
+              additionalProperties:
+                type: object
+                additionalProperties:
+                  type: boolean
 
     Sector:
       type: object
@@ -705,6 +738,8 @@ components:
           type: ["string", "null"]
         goalId:
           type: ["string", "null"]
+        estimatedMinutes:
+          type: ["integer", "null"]
         sector:
           oneOf:
             - $ref: "#/components/schemas/Sector"
@@ -750,6 +785,8 @@ components:
           type: ["string", "null"]
         goalId:
           type: ["string", "null"]
+        estimatedMinutes:
+          type: ["integer", "null"]
         sector:
           oneOf:
             - $ref: "#/components/schemas/Sector"
@@ -798,6 +835,8 @@ components:
           type: ["string", "null"]
         goalId:
           type: ["string", "null"]
+        estimatedMinutes:
+          type: ["integer", "null"]
 
     TaskUpdate:
       type: object
@@ -824,6 +863,8 @@ components:
           type: ["string", "null"]
         goalId:
           type: ["string", "null"]
+        estimatedMinutes:
+          type: ["integer", "null"]
 
     TaskSessionResult:
       type: object
@@ -851,6 +892,26 @@ components:
         createdAt:
           type: string
 
+    ProjectKpi:
+      type: object
+      required: [name, target, current]
+      properties:
+        name:
+          type: string
+        target:
+          type: number
+        current:
+          type: number
+
+    ProjectAttachment:
+      type: object
+      required: [name, url]
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+
     Project:
       type: object
       required: [id, name, color, status, createdAt]
@@ -867,6 +928,16 @@ components:
           type: ["string", "null"]
         status:
           type: string
+        objective:
+          type: ["string", "null"]
+        kpis:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProjectKpi"
+        attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProjectAttachment"
         taskCount:
           type: integer
         doneCount:
@@ -886,6 +957,16 @@ components:
           type: string
         deadline:
           type: ["string", "null"]
+        objective:
+          type: ["string", "null"]
+        kpis:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProjectKpi"
+        attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProjectAttachment"
 
     ProjectUpdate:
       type: object
@@ -900,6 +981,16 @@ components:
           type: ["string", "null"]
         status:
           type: string
+        objective:
+          type: ["string", "null"]
+        kpis:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProjectKpi"
+        attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProjectAttachment"
 
     Goal:
       type: object
@@ -1005,6 +1096,34 @@ components:
           type: string
         count:
           type: integer
+
+    TaskTimeEntry:
+      type: object
+      required: [title, minutes]
+      properties:
+        title:
+          type: string
+        minutes:
+          type: integer
+
+    ProductivityStats:
+      type: object
+      required: [byTask, savedMinutes, lostMinutes]
+      properties:
+        byTask:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskTimeEntry"
+        savedMinutes:
+          type: integer
+        lostMinutes:
+          type: integer
+        estimatedTotalSavedMinutes:
+          type: integer
+          nullable: true
+        daysSinceProfile:
+          type: integer
+          nullable: true
 
     WeeklyStats:
       type: object

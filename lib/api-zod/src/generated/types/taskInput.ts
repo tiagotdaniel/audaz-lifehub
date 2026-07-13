@@ -21,4 +21,6 @@ export interface TaskInput {
   projectId?: string | null;
   /** @nullable */
   goalId?: string | null;
+  /** @nullable */
+  estimatedMinutes?: number | null;
 }

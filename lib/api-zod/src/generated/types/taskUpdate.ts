@@ -23,4 +23,6 @@ export interface TaskUpdate {
   projectId?: string | null;
   /** @nullable */
   goalId?: string | null;
+  /** @nullable */
+  estimatedMinutes?: number | null;
 }

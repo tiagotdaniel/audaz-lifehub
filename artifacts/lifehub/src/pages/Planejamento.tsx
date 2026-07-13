@@ -25,21 +25,21 @@ export default function Planejamento() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-serif font-bold text-[#F0EBE3]">Planejamento Semanal</h1>
+        <h1 className="text-3xl font-serif font-bold text-[var(--text-primary)]">Planejamento Semanal</h1>
         <div className="flex items-center gap-2">
-          <button onClick={() => setWeekOffset(w => w - 1)} className="p-2 rounded-lg bg-[#1A2B42] border border-[#162236] text-[#A89880] hover:text-[#F0EBE3] transition-colors">
+          <button onClick={() => setWeekOffset(w => w - 1)} className="p-2 rounded-lg bg-[var(--surface-2)] border border-[var(--surface-1)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <button onClick={() => setWeekOffset(0)} className="px-3 py-1.5 rounded-lg bg-[#1A2B42] border border-[#162236] text-xs text-[#C9A84C] font-semibold hover:bg-[#162236] transition-colors">
+          <button onClick={() => setWeekOffset(0)} className="px-3 py-1.5 rounded-lg bg-[var(--surface-2)] border border-[var(--surface-1)] text-xs text-[#C9A84C] font-semibold hover:bg-[var(--surface-1)] transition-colors">
             Hoje
           </button>
-          <button onClick={() => setWeekOffset(w => w + 1)} className="p-2 rounded-lg bg-[#1A2B42] border border-[#162236] text-[#A89880] hover:text-[#F0EBE3] transition-colors">
+          <button onClick={() => setWeekOffset(w => w + 1)} className="p-2 rounded-lg bg-[var(--surface-2)] border border-[var(--surface-1)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
       </div>
 
-      <p className="text-[#A89880] text-sm">
+      <p className="text-[var(--text-muted)] text-sm">
         {format(weekStart, "d 'de' MMMM", { locale: ptBR })} — {format(weekEnd, "d 'de' MMMM yyyy", { locale: ptBR })}
       </p>
 
@@ -49,12 +49,12 @@ export default function Planejamento() {
           const isToday = day.toDateString() === today.toDateString();
 
           return (
-            <div key={day.toISOString()} className={`rounded-xl border p-3 min-h-[120px] ${isToday ? "border-[#C9A84C] bg-[#1A2B42]" : "border-[#162236] bg-[#1A2B42]"}`}>
+            <div key={day.toISOString()} className={`rounded-xl border p-3 min-h-[120px] ${isToday ? "border-[#C9A84C] bg-[var(--surface-2)]" : "border-[var(--surface-1)] bg-[var(--surface-2)]"}`}>
               <div className="mb-2">
-                <p className={`text-xs font-bold uppercase ${isToday ? "text-[#C9A84C]" : "text-[#6B7A8D]"}`}>
+                <p className={`text-xs font-bold uppercase ${isToday ? "text-[#C9A84C]" : "text-[var(--text-subtle)]"}`}>
                   {format(day, "EEE", { locale: ptBR })}
                 </p>
-                <p className={`text-lg font-bold ${isToday ? "text-[#C9A84C]" : "text-[#A89880]"}`}>
+                <p className={`text-lg font-bold ${isToday ? "text-[#C9A84C]" : "text-[var(--text-muted)]"}`}>
                   {format(day, "d")}
                 </p>
               </div>
@@ -63,7 +63,7 @@ export default function Planejamento() {
                   <div
                     key={task.id}
                     onClick={() => setSelectedTaskId(task.id)}
-                    className="px-1.5 py-1 rounded text-xs text-[#F0EBE3] bg-[#162236] hover:bg-[#0D1B2A] cursor-pointer transition-colors border-l-2 truncate"
+                    className="px-1.5 py-1 rounded text-xs text-[var(--text-primary)] bg-[var(--surface-1)] hover:bg-[var(--surface-0)] cursor-pointer transition-colors border-l-2 truncate"
                     style={{ borderColor: PRIORITY_COLORS[task.priority] }}
                     title={task.title}
                   >
