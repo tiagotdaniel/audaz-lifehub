@@ -2,6 +2,9 @@
   "buildCommand": "PORT=3000 BASE_PATH=/ pnpm --filter @workspace/lifehub run build",
   "installCommand": "pnpm install --frozen-lockfile",
   "outputDirectory": "artifacts/lifehub/dist/public",
+  "functions": {
+    "api/index.ts": {}
+  },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api" }
   ]
