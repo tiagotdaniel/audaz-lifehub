@@ -115,6 +115,9 @@ export interface Task {
   goalId?: string | null;
   /** @nullable */
   estimatedMinutes?: number | null;
+  syncToCalendar?: boolean;
+  /** @nullable */
+  googleEventId?: string | null;
   sector?: Sector | null;
   project?: Project | null;
   totalTimeSeconds?: number;
@@ -168,6 +171,9 @@ export interface TaskDetail {
   goalId?: string | null;
   /** @nullable */
   estimatedMinutes?: number | null;
+  syncToCalendar?: boolean;
+  /** @nullable */
+  googleEventId?: string | null;
   sector?: Sector | null;
   project?: Project | null;
   goal?: Goal | null;
@@ -194,6 +200,7 @@ export interface TaskInput {
   goalId?: string | null;
   /** @nullable */
   estimatedMinutes?: number | null;
+  syncToCalendar?: boolean;
 }
 
 export interface TaskUpdate {
@@ -215,6 +222,7 @@ export interface TaskUpdate {
   goalId?: string | null;
   /** @nullable */
   estimatedMinutes?: number | null;
+  syncToCalendar?: boolean;
 }
 
 export interface TaskSessionResult {

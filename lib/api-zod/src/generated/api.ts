@@ -96,6 +96,8 @@ export const GetTasksResponseItem = zod.object({
   "projectId": zod.string().nullish(),
   "goalId": zod.string().nullish(),
   "estimatedMinutes": zod.number().nullish(),
+  "syncToCalendar": zod.boolean().optional(),
+  "googleEventId": zod.string().nullish(),
   "sector": zod.union([zod.object({
   "id": zod.string(),
   "label": zod.string(),
@@ -145,7 +147,8 @@ export const CreateTaskBody = zod.object({
   "sectorId": zod.string().nullish(),
   "projectId": zod.string().nullish(),
   "goalId": zod.string().nullish(),
-  "estimatedMinutes": zod.number().nullish()
+  "estimatedMinutes": zod.number().nullish(),
+  "syncToCalendar": zod.boolean().optional()
 })
 
 export const CreateTaskResponse = zod.object({
@@ -162,6 +165,8 @@ export const CreateTaskResponse = zod.object({
   "projectId": zod.string().nullish(),
   "goalId": zod.string().nullish(),
   "estimatedMinutes": zod.number().nullish(),
+  "syncToCalendar": zod.boolean().optional(),
+  "googleEventId": zod.string().nullish(),
   "sector": zod.union([zod.object({
   "id": zod.string(),
   "label": zod.string(),
@@ -216,6 +221,8 @@ export const GetTaskResponse = zod.object({
   "projectId": zod.string().nullish(),
   "goalId": zod.string().nullish(),
   "estimatedMinutes": zod.number().nullish(),
+  "syncToCalendar": zod.boolean().optional(),
+  "googleEventId": zod.string().nullish(),
   "sector": zod.union([zod.object({
   "id": zod.string(),
   "label": zod.string(),
@@ -287,7 +294,8 @@ export const UpdateTaskBody = zod.object({
   "sectorId": zod.string().nullish(),
   "projectId": zod.string().nullish(),
   "goalId": zod.string().nullish(),
-  "estimatedMinutes": zod.number().nullish()
+  "estimatedMinutes": zod.number().nullish(),
+  "syncToCalendar": zod.boolean().optional()
 })
 
 export const UpdateTaskResponse = zod.object({
@@ -304,6 +312,8 @@ export const UpdateTaskResponse = zod.object({
   "projectId": zod.string().nullish(),
   "goalId": zod.string().nullish(),
   "estimatedMinutes": zod.number().nullish(),
+  "syncToCalendar": zod.boolean().optional(),
+  "googleEventId": zod.string().nullish(),
   "sector": zod.union([zod.object({
   "id": zod.string(),
   "label": zod.string(),
@@ -358,6 +368,8 @@ export const DeleteTaskResponse = zod.object({
   "projectId": zod.string().nullish(),
   "goalId": zod.string().nullish(),
   "estimatedMinutes": zod.number().nullish(),
+  "syncToCalendar": zod.boolean().optional(),
+  "googleEventId": zod.string().nullish(),
   "sector": zod.union([zod.object({
   "id": zod.string(),
   "label": zod.string(),
@@ -413,6 +425,8 @@ export const ExecuteTaskResponse = zod.object({
   "projectId": zod.string().nullish(),
   "goalId": zod.string().nullish(),
   "estimatedMinutes": zod.number().nullish(),
+  "syncToCalendar": zod.boolean().optional(),
+  "googleEventId": zod.string().nullish(),
   "sector": zod.union([zod.object({
   "id": zod.string(),
   "label": zod.string(),
@@ -476,6 +490,8 @@ export const PauseTaskResponse = zod.object({
   "projectId": zod.string().nullish(),
   "goalId": zod.string().nullish(),
   "estimatedMinutes": zod.number().nullish(),
+  "syncToCalendar": zod.boolean().optional(),
+  "googleEventId": zod.string().nullish(),
   "sector": zod.union([zod.object({
   "id": zod.string(),
   "label": zod.string(),
@@ -530,6 +546,8 @@ export const StopTaskResponse = zod.object({
   "projectId": zod.string().nullish(),
   "goalId": zod.string().nullish(),
   "estimatedMinutes": zod.number().nullish(),
+  "syncToCalendar": zod.boolean().optional(),
+  "googleEventId": zod.string().nullish(),
   "sector": zod.union([zod.object({
   "id": zod.string(),
   "label": zod.string(),
@@ -584,6 +602,8 @@ export const CompleteTaskResponse = zod.object({
   "projectId": zod.string().nullish(),
   "goalId": zod.string().nullish(),
   "estimatedMinutes": zod.number().nullish(),
+  "syncToCalendar": zod.boolean().optional(),
+  "googleEventId": zod.string().nullish(),
   "sector": zod.union([zod.object({
   "id": zod.string(),
   "label": zod.string(),

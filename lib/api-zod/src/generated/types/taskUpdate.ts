@@ -25,4 +25,5 @@ export interface TaskUpdate {
   goalId?: string | null;
   /** @nullable */
   estimatedMinutes?: number | null;
+  syncToCalendar?: boolean;
 }

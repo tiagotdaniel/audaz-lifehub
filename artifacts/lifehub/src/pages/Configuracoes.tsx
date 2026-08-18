@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { LogOut, Save, Chrome, Globe, QrCode, Bell, Settings2, Moon, Sun, Monitor, Users, Trash2, Shield, Eye, UserCog, Gauge } from "lucide-react";
+import { LogOut, Save, Chrome, Globe, QrCode, Bell, Settings2, Moon, Sun, Monitor, Users, Trash2, Shield, Eye, UserCog, Gauge, CalendarDays, Link2, Link2Off, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTheme } from "@/context/ThemeContext";
 import { useAuth } from "@clerk/react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ProductivityQuestionnaireModal, { type ProductivityProfile } from "@/components/ProductivityQuestionnaireModal";
+import { useAuthedFetch } from "@/hooks/useAuthedFetch";
 
 const THEME_OPTIONS = [
   { key: "dark" as const, label: "Noturno", icon: Moon },
@@ -85,6 +86,47 @@ export default function Configuracoes() {
       setProductivityProfile(data);
     })();
   }, [getToken]);
+
+  const authedFetch = useAuthedFetch();
+  const [googleConnected, setGoogleConnected] = useState<boolean | null>(null);
+  const [googleBusy, setGoogleBusy] = useState(false);
+  const [googleNotice, setGoogleNotice] = useState<"connected" | "error" | null>(null);
+
+  const loadGoogleStatus = () => {
+    authedFetch("/api/google/status").then((data) => setGoogleConnected(!!data.connected));
+  };
+
+  useEffect(() => {
+    loadGoogleStatus();
+    const params = new URLSearchParams(window.location.search);
+    const google = params.get("google");
+    if (google === "connected" || google === "error") {
+      setGoogleNotice(google);
+      params.delete("google");
+      const qs = params.toString();
+      window.history.replaceState({}, "", window.location.pathname + (qs ? `?${qs}` : ""));
+    }
+  }, []);
+
+  const connectGoogle = async () => {
+    setGoogleBusy(true);
+    try {
+      const data = await authedFetch("/api/google/auth-url");
+      if (data.url) window.location.href = data.url;
+    } finally {
+      setGoogleBusy(false);
+    }
+  };
+
+  const disconnectGoogle = async () => {
+    setGoogleBusy(true);
+    try {
+      await authedFetch("/api/google/disconnect", { method: "POST" });
+      setGoogleConnected(false);
+    } finally {
+      setGoogleBusy(false);
+    }
+  };
 
   const memberFetch = async (path: string, opts?: RequestInit) => {
     const token = await getToken();
@@ -275,6 +317,49 @@ export default function Configuracoes() {
         initial={productivityProfile}
         onSaved={(p) => { setProductivityProfile(p); qc.invalidateQueries({ queryKey: getGetProductivityStatsQueryKey() }); }}
       />
+
+      {/* Google Calendar & Drive */}
+      <div className="bg-[var(--surface-2)] rounded-xl p-6 border border-[var(--surface-1)] space-y-4">
+        <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-widest flex items-center gap-2">
+          <CalendarDays className="h-3.5 w-3.5" />
+          Google Calendar & Drive
+        </h2>
+        <p className="text-xs text-[var(--text-subtle)]">
+          Conecte sua conta Google para sincronizar tarefas marcadas como "Agenda" com o Google Calendar e anexar arquivos do Drive às tarefas.
+        </p>
+        {googleNotice === "connected" && (
+          <p className="text-xs text-[#4CAF50]">Conta Google conectada com sucesso.</p>
+        )}
+        {googleNotice === "error" && (
+          <p className="text-xs text-[#E53E3E]">Não foi possível conectar sua conta Google. Tente novamente.</p>
+        )}
+        {googleConnected === null ? (
+          <p className="text-sm text-[var(--text-muted)]">Verificando conexão...</p>
+        ) : googleConnected ? (
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-[#4CAF50] flex items-center gap-2">
+              <Link2 className="h-4 w-4" /> Conectado
+            </span>
+            <button
+              onClick={disconnectGoogle}
+              disabled={googleBusy}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[var(--surface-1)] text-[var(--text-muted)] text-sm hover:text-[#E53E3E] hover:border-[#E53E3E]/40 disabled:opacity-40 transition-colors"
+            >
+              {googleBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2Off className="h-4 w-4" />}
+              Desconectar
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={connectGoogle}
+            disabled={googleBusy}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--surface-0)] border border-[var(--surface-1)] text-[var(--text-muted)] text-sm hover:text-[#C9A84C] hover:border-[#C9A84C]/40 disabled:opacity-40 transition-colors"
+          >
+            {googleBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
+            Conectar conta Google
+          </button>
+        )}
+      </div>
 
       {/* Lembretes: horário padrão */}
       <div className="bg-[var(--surface-2)] rounded-xl p-6 border border-[var(--surface-1)] space-y-5">

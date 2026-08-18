@@ -26,6 +26,18 @@ export type User = typeof usersTable.$inferSelect;
 export const insertUserSchema = createInsertSchema(usersTable);
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
+export const googleTokensTable = pgTable("google_tokens", {
+  userId: text("user_id").primaryKey().references(() => usersTable.id, { onDelete: "cascade" }),
+  accessToken: text("access_token").notNull(),
+  refreshToken: text("refresh_token").notNull(),
+  expiryDate: timestamp("expiry_date", { withTimezone: true }).notNull(),
+  scope: text("scope").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type GoogleTokens = typeof googleTokensTable.$inferSelect;
+
 export const sectorsTable = pgTable("sectors", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
@@ -87,6 +99,8 @@ export const tasksTable = pgTable("tasks", {
   reminderAt: timestamp("reminder_at", { withTimezone: true }),
   reminderSent: boolean("reminder_sent").notNull().default(false),
   reminderChannels: text("reminder_channels").array().notNull().default([]),
+  syncToCalendar: boolean("sync_to_calendar").notNull().default(false),
+  googleEventId: text("google_event_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

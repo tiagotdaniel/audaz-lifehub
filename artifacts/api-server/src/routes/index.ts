@@ -18,6 +18,7 @@ import feedbackRouter from "./feedback";
 import streakRouter from "./streak";
 import membersRouter from "./members";
 import productivityProfileRouter from "./productivity-profile";
+import googleRouter from "./google";
 
 const router = Router();
 
@@ -40,5 +41,6 @@ router.use("/feedback", feedbackRouter);
 router.use("/streak", streakRouter);
 router.use("/members", membersRouter);
 router.use("/productivity-profile", productivityProfileRouter);
+router.use("/google", googleRouter);
 
 export default router;

@@ -29,6 +29,9 @@ export interface Task {
   goalId?: string | null;
   /** @nullable */
   estimatedMinutes?: number | null;
+  syncToCalendar?: boolean;
+  /** @nullable */
+  googleEventId?: string | null;
   sector?: Sector | null;
   project?: Project | null;
   totalTimeSeconds?: number;

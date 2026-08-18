@@ -52,6 +52,7 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+gentle-shell-*.json
 
 # Claude Code local settings
 .claude/settings.local.json

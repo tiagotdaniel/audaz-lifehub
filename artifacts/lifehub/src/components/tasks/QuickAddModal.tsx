@@ -6,7 +6,7 @@ import { parsePortugueseDate, extractTitle, extractPriority, parseTimeExpression
 import { fileToAttachment, type Attachment } from "@/lib/fileUpload";
 import { format, addDays, nextSaturday, nextMonday } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Flag, X, Send, CalendarClock, Hash, SkipForward, List, Paperclip, Upload, Loader2 } from "lucide-react";
+import { Flag, X, Send, CalendarClock, Hash, SkipForward, List, Paperclip, Upload, Loader2, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import TaskDescriptionEditor from "./TaskDescriptionEditor";
@@ -55,6 +55,7 @@ export default function QuickAddModal({ open, onClose }: QuickAddModalProps) {
   const [targetList, setTargetList] = useState<CheckList | null>(null);
   const [lists, setLists] = useState<CheckList[]>([]);
   const [pendingAttachments, setPendingAttachments] = useState<Attachment[]>([]);
+  const [syncToCalendar, setSyncToCalendar] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -196,6 +197,7 @@ export default function QuickAddModal({ open, onClose }: QuickAddModalProps) {
           projectId: projectId ?? undefined,
           goalId: goalId ?? undefined,
           estimatedMinutes: estimatedMinutes ? parseInt(estimatedMinutes) : undefined,
+          syncToCalendar,
         },
       },
       {
@@ -421,6 +423,19 @@ export default function QuickAddModal({ open, onClose }: QuickAddModalProps) {
               className="bg-[var(--surface-2)] border-[var(--surface-2)] text-[var(--text-primary)] placeholder:text-[var(--text-subtle)] h-9 text-sm w-32"
             />
           </div>
+
+          <button
+            type="button"
+            onClick={() => setSyncToCalendar((v) => !v)}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
+              syncToCalendar
+                ? "bg-[#C9A84C]/10 border-[#C9A84C] text-[#C9A84C]"
+                : "bg-[var(--surface-2)] border-[var(--surface-2)] text-[var(--text-muted)] hover:border-[#C9A84C]/40"
+            }`}
+          >
+            <CalendarDays className="h-4 w-4" />
+            Agenda (sincronizar com Google Calendar)
+          </button>
 
           {/* Anexos */}
           <div className="space-y-2">

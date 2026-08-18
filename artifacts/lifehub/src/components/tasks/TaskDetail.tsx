@@ -8,8 +8,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@clerk/react";
 import { useTimerStore } from "@/store/timerStore";
 import { fileToAttachment, type Attachment as UploadedAttachment } from "@/lib/fileUpload";
+import { openDrivePicker } from "@/lib/googleDrivePicker";
 import TaskDescriptionEditor from "./TaskDescriptionEditor";
-import { X, Play, Check, Clock, Trash2, AlertTriangle, CalendarClock, SkipForward, Pencil, MessageSquare, Paperclip, Send, Link as LinkIcon, Smile, AtSign, CornerDownRight, Upload, Loader2 } from "lucide-react";
+import { X, Play, Check, Clock, Trash2, AlertTriangle, CalendarClock, SkipForward, Pencil, MessageSquare, Paperclip, Send, Link as LinkIcon, Smile, AtSign, CornerDownRight, Upload, Loader2, HardDrive } from "lucide-react";
 import { format, addDays, nextSaturday, nextMonday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -369,6 +370,7 @@ function AttachmentsSection({ taskId }: { taskId: string }) {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [driveLoading, setDriveLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const load = () => {
@@ -380,6 +382,29 @@ function AttachmentsSection({ taskId }: { taskId: string }) {
   };
 
   useEffect(() => { load(); }, [taskId]);
+
+  const handleDriveAttach = async () => {
+    setUploadError("");
+    setDriveLoading(true);
+    try {
+      const tokenData = await authedFetch("/api/google/drive/token");
+      if (!tokenData.accessToken || !tokenData.pickerApiKey) {
+        setUploadError("Conecte sua conta Google em Configurações para anexar arquivos do Drive.");
+        return;
+      }
+      const picked = await openDrivePicker(tokenData.accessToken, tokenData.pickerApiKey);
+      if (!picked) return;
+      await authedFetch(`/api/attachments/tasks/${taskId}`, {
+        method: "POST",
+        body: JSON.stringify(picked),
+      });
+      load();
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Não foi possível anexar o arquivo do Drive.");
+    } finally {
+      setDriveLoading(false);
+    }
+  };
 
   const handleAdd = async () => {
     if (!name.trim() || !url.trim()) return;
@@ -455,6 +480,14 @@ function AttachmentsSection({ taskId }: { taskId: string }) {
           {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
           Enviar do dispositivo
         </button>
+        <button
+          onClick={handleDriveAttach}
+          disabled={driveLoading}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-[var(--surface-2)] text-[var(--text-muted)] text-sm hover:text-[#C9A84C] hover:border-[#C9A84C]/40 disabled:opacity-40 transition-colors"
+        >
+          {driveLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <HardDrive className="h-4 w-4" />}
+          Anexar do Drive
+        </button>
       </div>
       <div className="flex gap-2">
         <Input
@@ -493,6 +526,7 @@ export default function TaskDetail({ taskId, onClose, onDeleted }: TaskDetailPro
   const [editProjectId, setEditProjectId] = useState<string | null>(null);
   const [editGoalId, setEditGoalId] = useState<string | null>(null);
   const [editEstimatedMinutes, setEditEstimatedMinutes] = useState("");
+  const [editSyncToCalendar, setEditSyncToCalendar] = useState(false);
 
   const { data: task, isLoading } = useGetTask(taskId, {
     query: { enabled: !!taskId, queryKey: getGetTaskQueryKey(taskId) },
@@ -515,6 +549,7 @@ export default function TaskDetail({ taskId, onClose, onDeleted }: TaskDetailPro
     setEditProjectId(task.projectId ?? null);
     setEditGoalId(task.goalId ?? null);
     setEditEstimatedMinutes(task.estimatedMinutes?.toString() ?? "");
+    setEditSyncToCalendar(task.syncToCalendar ?? false);
     setEditing(true);
   };
 
@@ -530,6 +565,7 @@ export default function TaskDetail({ taskId, onClose, onDeleted }: TaskDetailPro
         projectId: editProjectId ?? undefined,
         goalId: editGoalId ?? undefined,
         estimatedMinutes: editEstimatedMinutes ? parseInt(editEstimatedMinutes) : undefined,
+        syncToCalendar: editSyncToCalendar,
       },
     }, {
       onSuccess: () => {
@@ -695,6 +731,18 @@ export default function TaskDetail({ taskId, onClose, onDeleted }: TaskDetailPro
                     className="bg-[var(--surface-2)] border-[var(--surface-2)] text-[var(--text-primary)] w-32"
                   />
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setEditSyncToCalendar((v) => !v)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
+                    editSyncToCalendar
+                      ? "bg-[#C9A84C]/10 border-[#C9A84C] text-[#C9A84C]"
+                      : "bg-[var(--surface-2)] border-[var(--surface-2)] text-[var(--text-muted)] hover:border-[#C9A84C]/40"
+                  }`}
+                >
+                  <CalendarClock className="h-4 w-4" />
+                  Agenda (sincronizar com Google Calendar)
+                </button>
                 <div className="flex gap-2 pt-2">
                   <button
                     onClick={() => setEditing(false)}
@@ -729,9 +777,17 @@ export default function TaskDetail({ taskId, onClose, onDeleted }: TaskDetailPro
                         <Pencil className="h-4 w-4" />
                       </button>
                     </div>
-                    <p className="text-sm mt-1" style={{ color: PRIORITY_COLORS[task.priority] }}>
-                      {PRIORITY_LABELS[task.priority]}
-                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <p className="text-sm" style={{ color: PRIORITY_COLORS[task.priority] }}>
+                        {PRIORITY_LABELS[task.priority]}
+                      </p>
+                      {task.syncToCalendar && (
+                        <span className="flex items-center gap-1 text-xs text-[#C9A84C] bg-[#C9A84C]/10 px-2 py-0.5 rounded-full">
+                          <CalendarClock className="h-3 w-3" />
+                          Agenda
+                        </span>
+                      )}
+                    </div>
                     <div className="mt-2">
                       <TaskDescriptionEditor value={task.description ?? ""} onChange={() => {}} editable={false} />
                     </div>

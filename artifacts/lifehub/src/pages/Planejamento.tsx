@@ -1,15 +1,27 @@
 import { useGetTasks } from "@workspace/api-client-react";
 import { format, startOfWeek, endOfWeek, addDays, isWithinInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import TaskDetail from "@/components/tasks/TaskDetail";
+import { useAuthedFetch } from "@/hooks/useAuthedFetch";
 
 const PRIORITY_COLORS: Record<number, string> = { 1: "#E53E3E", 2: "#ED8936", 3: "#3B82F6", 4: "#6B7280" };
+
+interface GoogleEvent {
+  id: string;
+  title: string;
+  start: string;
+  end: string;
+  allDay: boolean;
+  htmlLink: string | null;
+}
 
 export default function Planejamento() {
   const [weekOffset, setWeekOffset] = useState(0);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [googleEvents, setGoogleEvents] = useState<GoogleEvent[]>([]);
+  const authedFetch = useAuthedFetch();
 
   const today = new Date();
   const weekStart = addDays(startOfWeek(today, { weekStartsOn: 1 }), weekOffset * 7);
@@ -19,6 +31,13 @@ export default function Planejamento() {
     dateFrom: weekStart.toISOString(),
     dateTo: weekEnd.toISOString(),
   });
+
+  useEffect(() => {
+    const params = new URLSearchParams({ timeMin: weekStart.toISOString(), timeMax: weekEnd.toISOString() });
+    authedFetch(`/api/google/calendar/events?${params.toString()}`).then((data) => {
+      setGoogleEvents(Array.isArray(data) ? data : []);
+    });
+  }, [weekStart.toISOString(), weekEnd.toISOString()]);
 
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
@@ -46,6 +65,7 @@ export default function Planejamento() {
       <div className="grid grid-cols-7 gap-2">
         {weekDays.map((day) => {
           const dayTasks = tasks?.filter((t) => t.dueDate && isWithinInterval(new Date(t.dueDate), { start: new Date(day.toDateString()), end: addDays(new Date(day.toDateString()), 1) })) ?? [];
+          const dayEvents = googleEvents.filter((e) => e.start && isWithinInterval(new Date(e.start), { start: new Date(day.toDateString()), end: addDays(new Date(day.toDateString()), 1) }));
           const isToday = day.toDateString() === today.toDateString();
 
           return (
@@ -69,6 +89,19 @@ export default function Planejamento() {
                   >
                     {task.title}
                   </div>
+                ))}
+                {dayEvents.map((event) => (
+                  <a
+                    key={event.id}
+                    href={event.htmlLink ?? undefined}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 px-1.5 py-1 rounded text-xs text-[#3B82F6] bg-[#3B82F6]/10 hover:bg-[#3B82F6]/20 transition-colors border-l-2 border-[#3B82F6] truncate"
+                    title={event.title}
+                  >
+                    <CalendarDays className="h-3 w-3 shrink-0" />
+                    <span className="truncate">{event.title}</span>
+                  </a>
                 ))}
               </div>
             </div>

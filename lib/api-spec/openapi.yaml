@@ -740,6 +740,10 @@ components:
           type: ["string", "null"]
         estimatedMinutes:
           type: ["integer", "null"]
+        syncToCalendar:
+          type: boolean
+        googleEventId:
+          type: ["string", "null"]
         sector:
           oneOf:
             - $ref: "#/components/schemas/Sector"
@@ -787,6 +791,10 @@ components:
           type: ["string", "null"]
         estimatedMinutes:
           type: ["integer", "null"]
+        syncToCalendar:
+          type: boolean
+        googleEventId:
+          type: ["string", "null"]
         sector:
           oneOf:
             - $ref: "#/components/schemas/Sector"
@@ -837,6 +845,8 @@ components:
           type: ["string", "null"]
         estimatedMinutes:
           type: ["integer", "null"]
+        syncToCalendar:
+          type: boolean
 
     TaskUpdate:
       type: object
@@ -865,6 +875,8 @@ components:
           type: ["string", "null"]
         estimatedMinutes:
           type: ["integer", "null"]
+        syncToCalendar:
+          type: boolean
 
     TaskSessionResult:
       type: object

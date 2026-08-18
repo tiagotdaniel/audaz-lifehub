@@ -3,6 +3,7 @@ import { db, tasksTable, sectorsTable, projectsTable, goalsTable, timeSessionsTa
 import { eq, and, gte, lte, sql } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
 import { randomUUID } from "crypto";
+import { syncTaskEvent, deleteTaskEvent } from "../lib/googleCalendar";
 
 const router = Router();
 
@@ -58,7 +59,7 @@ router.get("/", requireAuth, async (req, res) => {
 
 router.post("/", requireAuth, async (req, res) => {
   const userId = req.userId!;
-  const { title, description, priority, dueDate, reminderAt, reminderChannels, sectorId, projectId, goalId, estimatedMinutes } = req.body;
+  const { title, description, priority, dueDate, reminderAt, reminderChannels, sectorId, projectId, goalId, estimatedMinutes, syncToCalendar } = req.body;
 
   const id = randomUUID();
   await db.insert(tasksTable).values({
@@ -74,9 +75,19 @@ router.post("/", requireAuth, async (req, res) => {
     projectId: projectId ?? null,
     goalId: goalId ?? null,
     estimatedMinutes: estimatedMinutes ?? null,
+    syncToCalendar: syncToCalendar ?? false,
   });
 
-  const [task] = await db.select().from(tasksTable).where(eq(tasksTable.id, id));
+  let [task] = await db.select().from(tasksTable).where(eq(tasksTable.id, id));
+
+  if (task.syncToCalendar) {
+    const googleEventId = await syncTaskEvent(userId, task);
+    if (googleEventId !== task.googleEventId) {
+      await db.update(tasksTable).set({ googleEventId }).where(eq(tasksTable.id, id));
+      [task] = await db.select().from(tasksTable).where(eq(tasksTable.id, id));
+    }
+  }
+
   res.status(201).json({ ...task, sector: null, project: null, totalTimeSeconds: 0 });
 });
 
@@ -116,7 +127,7 @@ router.patch("/:id", requireAuth, async (req, res) => {
   const userId = req.userId!;
   const updates: Partial<typeof tasksTable.$inferInsert> = { updatedAt: new Date() };
 
-  const fields = ["title", "description", "priority", "status", "sectorId", "projectId", "goalId", "reminderChannels", "estimatedMinutes"] as const;
+  const fields = ["title", "description", "priority", "status", "sectorId", "projectId", "goalId", "reminderChannels", "estimatedMinutes", "syncToCalendar"] as const;
   for (const f of fields) {
     if (req.body[f] !== undefined) (updates as any)[f] = req.body[f];
   }
@@ -124,8 +135,21 @@ router.patch("/:id", requireAuth, async (req, res) => {
   if (req.body.reminderAt !== undefined) updates.reminderAt = req.body.reminderAt ? new Date(req.body.reminderAt) : null;
 
   await db.update(tasksTable).set(updates).where(and(eq(tasksTable.id, id), eq(tasksTable.userId, userId)));
-  const [task] = await db.select().from(tasksTable).where(eq(tasksTable.id, id));
+  let [task] = await db.select().from(tasksTable).where(eq(tasksTable.id, id));
   if (!task) { res.status(404).json({ error: "Not found" }); return; }
+
+  if (task.syncToCalendar) {
+    const googleEventId = await syncTaskEvent(userId, task);
+    if (googleEventId !== task.googleEventId) {
+      await db.update(tasksTable).set({ googleEventId }).where(eq(tasksTable.id, id));
+      [task] = await db.select().from(tasksTable).where(eq(tasksTable.id, id));
+    }
+  } else if (task.googleEventId) {
+    await deleteTaskEvent(userId, task.googleEventId);
+    await db.update(tasksTable).set({ googleEventId: null }).where(eq(tasksTable.id, id));
+    [task] = await db.select().from(tasksTable).where(eq(tasksTable.id, id));
+  }
+
   res.json({ ...task, sector: null, project: null, totalTimeSeconds: 0 });
 });
 
@@ -134,6 +158,7 @@ router.delete("/:id", requireAuth, async (req, res) => {
   const userId = req.userId!;
   const [existing] = await db.select().from(tasksTable).where(and(eq(tasksTable.id, id), eq(tasksTable.userId, userId)));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (existing.googleEventId) await deleteTaskEvent(userId, existing.googleEventId);
   await db.delete(taskCommentsTable).where(eq(taskCommentsTable.taskId, id));
   await db.delete(timeSessionsTable).where(eq(timeSessionsTable.taskId, id));
   await db.delete(tasksTable).where(and(eq(tasksTable.id, id), eq(tasksTable.userId, userId)));
