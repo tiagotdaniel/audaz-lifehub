@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, listsTable, listItemsTable } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
 import { randomUUID } from "crypto";
 
@@ -35,7 +35,10 @@ router.get("/", requireAuth, async (req, res) => {
   }
 
   const items = await db.select().from(listItemsTable).where(eq(listItemsTable.userId, userId));
-  res.json(lists.map(list => ({ ...list, items: items.filter(i => i.listId === list.id) })));
+  res.json(lists.map(list => ({
+    ...list,
+    items: items.filter(i => i.listId === list.id).sort((a, b) => a.position - b.position),
+  })));
 });
 
 router.post("/", requireAuth, async (req, res) => {
@@ -73,8 +76,51 @@ router.post("/:listId/items", requireAuth, async (req, res) => {
   const userId = req.userId!;
   const { title, description, price, position } = req.body;
   const id = randomUUID();
-  const [item] = await db.insert(listItemsTable).values({ id, listId, userId, title, description, price, position: position ?? 0 }).returning();
+
+  let itemPosition = position;
+  if (itemPosition === undefined) {
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(listItemsTable)
+      .where(eq(listItemsTable.listId, listId));
+    itemPosition = count;
+  }
+
+  const [item] = await db.insert(listItemsTable).values({ id, listId, userId, title, description, price, position: itemPosition }).returning();
   res.status(201).json(item);
+});
+
+router.post("/:listId/items/bulk", requireAuth, async (req, res) => {
+  const { listId } = req.params as Record<string, string>;
+  const userId = req.userId!;
+  const { titles } = req.body as { titles: string[] };
+  if (!Array.isArray(titles) || titles.length === 0) { res.status(400).json({ error: "titles required" }); return; }
+
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(listItemsTable)
+    .where(eq(listItemsTable.listId, listId));
+
+  const rows = titles.map((title, i) => ({ id: randomUUID(), listId, userId, title, position: count + i }));
+  const items = await db.insert(listItemsTable).values(rows).returning();
+  res.status(201).json(items);
+});
+
+router.patch("/:listId/reorder", requireAuth, async (req, res) => {
+  const { listId } = req.params as Record<string, string>;
+  const userId = req.userId!;
+  const { itemIds } = req.body as { itemIds: string[] };
+  if (!Array.isArray(itemIds)) { res.status(400).json({ error: "itemIds required" }); return; }
+
+  await Promise.all(
+    itemIds.map((itemId, position) =>
+      db
+        .update(listItemsTable)
+        .set({ position })
+        .where(and(eq(listItemsTable.id, itemId), eq(listItemsTable.listId, listId), eq(listItemsTable.userId, userId)))
+    )
+  );
+  res.json({ success: true });
 });
 
 router.patch("/:listId/items/:itemId", requireAuth, async (req, res) => {
